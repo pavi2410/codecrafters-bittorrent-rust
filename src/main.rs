@@ -112,5 +112,5 @@ fn main() {
 fn info_hash(info: &Info) -> [u8] {
     let mut hasher = Sha1::new();
     hasher.update(serde_bencode::to_bytes(&info).unwrap());
-    hasher.finalize()
+    hasher.finalize().as_bytes()
 }

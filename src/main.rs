@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value as JsonValue};
 use serde_bencode::{de, value::Value as BencodeValue};
 use serde_bytes::ByteBuf;
-use sha1::Sha1;
+use sha1::{Sha1. Digest};
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Torrent {
@@ -56,7 +56,7 @@ fn main() {
 
         println!("Tracker URL: {}", torrent.announce);
         println!("Length: {}", torrent.info.length);
-        println!("Length: {}", info_hash(&torrent.info));
+        println!("Info Hash: {}", info_hash(&torrent.info));
     } else {
         println!("unknown command: {}", args[1])
     }

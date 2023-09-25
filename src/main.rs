@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate serde_derive;
+
 use std::env;
 use serde_json::{Map, Value as JsonValue};
 use serde_bencode::{de, value::Value as BencodeValue};

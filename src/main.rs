@@ -6,7 +6,7 @@ use serde_bencode::{de, value::Value};
 
 fn display(value: &Value) {
     match value {
-        Value::Bytes(bytes) => println!("{:?}", bytes),
+        Value::Bytes(bytes) => println!("{:?}", String::from_utf8_lossy(bytes)),
         Value::Int(num) => println!("{}", num),
         Value::List(list) => println!("{:?}", list),
         Value::Dict(dict) => println!("{:?}", dict),

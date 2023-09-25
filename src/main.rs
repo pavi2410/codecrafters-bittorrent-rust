@@ -1,8 +1,3 @@
-// extern crate serde;
-// extern crate serde_derive;
-// #[macro_use]
-// extern crate serde_bencode;
-
 use std::env;
 use serde::Deserialize;
 use serde_json::{Map, Value as JsonValue};
@@ -60,7 +55,14 @@ fn main() {
 
         println!("Tracker URL: {}", torrent.announce);
         println!("Length: {}", torrent.info.length);
+        println!("Length: {}", info_hash(&torrent.info));
     } else {
         println!("unknown command: {}", args[1])
     }
+}
+
+fn info_hash(info: &Info) -> String {
+    let mut hasher = sha1::Sha1::new();
+    hasher.update(serde_bencode::to_bytes(&info).unwrap());
+    hasher.digest().to_string()
 }

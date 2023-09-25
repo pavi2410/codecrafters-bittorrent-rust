@@ -19,7 +19,7 @@ struct Info {
     length: usize,
     name: String,
     piece_length: usize,
-    pieces: Vec<u8>,
+    // pieces: Vec<u8>,
 }
 
 

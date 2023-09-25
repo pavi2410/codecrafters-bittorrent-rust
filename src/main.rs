@@ -1,16 +1,15 @@
 use serde_json;
 use std::env;
-use std::fmt;
 
 // Available if you need it!
 use serde_bencode::{de, value::Value};
 
 fn display(value: &Value) {
     match value {
-        Value::Bytes(bytes) => println!(f, "{:?}", bytes),
-        Value::Int(num) => println!(f, "{}", num),
-        Value::List(list) => println!(f, "{:?}", list),
-        Value::Dict(dict) => println!(f, "{:?}", dict),
+        Value::Bytes(bytes) => println!("{:?}", bytes),
+        Value::Int(num) => println!("{}", num),
+        Value::List(list) => println!("{:?}", list),
+        Value::Dict(dict) => println!("{:?}", dict),
     }
 }
 

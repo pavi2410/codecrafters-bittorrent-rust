@@ -24,7 +24,7 @@ struct Info {
 
 #[derive(Debug, Deserialize, Serialize)]
 struct TrackerResponse {
-    interval: usize,
+    // interval: usize,
     peers: Vec<Peer>,
 }
 

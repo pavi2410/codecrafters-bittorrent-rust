@@ -76,7 +76,7 @@ fn main() {
             ("uploaded", "0"),
             ("downloaded", "0"),
             ("left", &torrent.info.length.to_string()),
-        ]
+        ];
         let tracker_url = &torrent.announce + serde_urlencoded::to_string(tracker_options).unwrap().as_str();
 
         let resp = reqwest::blocking::get(tracker_url)

@@ -76,6 +76,7 @@ fn main() {
             ("uploaded", "0".to_string()),
             ("downloaded", "0".to_string()),
             ("left", torrent.info.length.to_string()),
+            ("compact", "1".to_string()),
         ];
         let tracker_url = format!("{}?{}", torrent.announce, serde_urlencoded::to_string(tracker_options).unwrap());
 

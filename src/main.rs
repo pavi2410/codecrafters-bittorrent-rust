@@ -4,8 +4,9 @@
 // extern crate serde_bencode;
 
 use std::env;
+use serde::Deserialize;
 use serde_json::{Map, Value as JsonValue};
-use serde_bencode::{de, de::Deserialize, value::Value as BencodeValue};
+use serde_bencode::{de, value::Value as BencodeValue};
 
 #[derive(Debug, Deserialize)]
 struct Torrent {

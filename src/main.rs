@@ -1,10 +1,10 @@
-use std::env;
+use hex;
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value as JsonValue};
 use serde_bencode::{de, value::Value as BencodeValue};
 use serde_bytes::ByteBuf;
-use sha1::{Sha1, Digest};
-use hex;
+use serde_json::{Map, Value as JsonValue};
+use sha1::{Digest, Sha1};
+use std::env;
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Torrent {
@@ -20,7 +20,6 @@ struct Info {
     piece_length: usize,
     pieces: ByteBuf,
 }
-
 
 fn to_json(value: &BencodeValue) -> JsonValue {
     match value {
@@ -63,6 +62,19 @@ fn main() {
         for piece in torrent.info.pieces.chunks(20) {
             println!("{}", hex::encode(piece));
         }
+    } else if command == "peers" {
+        let file_name = &args[2];
+
+        let file_buf = std::fs::read(file_name).unwrap();
+
+        let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
+
+        let resp = reqwest::blocking::get(&torrent.announce)
+            .unwrap()
+            .text()
+            .unwrap();
+
+        println!("{}", resp);
     } else {
         println!("unknown command: {}", args[1])
     }

@@ -58,6 +58,11 @@ fn main() {
         println!("Tracker URL: {}", torrent.announce);
         println!("Length: {}", torrent.info.length);
         println!("Info Hash: {}", info_hash(&torrent.info));
+        println!("Piece Length: {}", torrent.info.piece_length);
+        println!("Piece Hashes:");
+        for piece in torrent.info.pieces.chunks(20) {
+            println!("{}", hex::encode(piece));
+        }
     } else {
         println!("unknown command: {}", args[1])
     }

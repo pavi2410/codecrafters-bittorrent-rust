@@ -71,10 +71,10 @@ fn main() {
 
         let tracker_options = &[
             ("info_hash", info_hash(&torrent.info)),
-            ("peer_id", "00112233445566778899"),
-            ("port", "6881"),
-            ("uploaded", "0"),
-            ("downloaded", "0"),
+            ("peer_id", "00112233445566778899".to_string()),
+            ("port", "6881".to_string()),
+            ("uploaded", "0".to_string()),
+            ("downloaded", "0".to_string()),
             ("left", torrent.info.length.to_string()),
         ];
         let tracker_url = torrent.announce + serde_urlencoded::to_string(tracker_options).unwrap().as_str();

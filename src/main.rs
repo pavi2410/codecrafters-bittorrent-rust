@@ -5,6 +5,7 @@ use serde_bytes::ByteBuf;
 use serde_json::{Map, Value as JsonValue};
 use sha1::{Digest, Sha1};
 use std::env;
+use std::net::Ipv4Addr;
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Torrent {
@@ -82,7 +83,7 @@ fn main() {
         let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
 
         let tracker_options = &[
-            ("info_hash", info_hash(&torrent.info)),
+            ("info_hash", String::from_utf8(info_hash(&torrent.info)).unwrap()),
             ("peer_id", "00112233445566778899".to_string()),
             ("port", "6881".to_string()),
             ("uploaded", "0".to_string()),

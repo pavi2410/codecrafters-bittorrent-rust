@@ -7,7 +7,7 @@ use serde_bencode::{de, value::Value};
 fn to_json(value: &Value) -> serde_json::Value {
     match value {
         Value::Bytes(bytes) => serde_json::Value::String(String::from_utf8_lossy(bytes).to_string()),
-        Value::Int(num) => serde_json::Value::Number(num.parse().unwrap()),
+        Value::Int(num) => serde_json::Value::Number(num.to_owned().parse().unwrap()),
         Value::List(list) => serde_json::Value::Array(list.to_owned()),
         Value::Dict(dict) => serde_json::Value::Object(dict.to_owned()),
     }

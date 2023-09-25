@@ -79,6 +79,8 @@ fn main() {
         ];
         let tracker_url = torrent.announce + serde_urlencoded::to_string(tracker_options).unwrap().as_str();
 
+        println!("{}", tracker_url);
+
         let resp = reqwest::blocking::get(tracker_url)
             .unwrap()
             .text()

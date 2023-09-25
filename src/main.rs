@@ -30,7 +30,7 @@ struct TrackerOptions {
     uploaded: usize,
     downloaded: usize,
     left: usize,
-    compact: bool,
+    compact: u8,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -100,7 +100,7 @@ fn main() {
             uploaded: 0,
             downloaded: 0,
             left: torrent.info.length,
-            compact: true,
+            compact: 1,
         };
 
         let tracker_url = format!(

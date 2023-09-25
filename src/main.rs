@@ -12,7 +12,7 @@ fn to_json(value: &BencodeValue) -> JsonValue {
         BencodeValue::Dict(dict) => {
             let mut json_dict = Map::new();
             for (key, val) in dict.iter() {
-                let key = String::from_utf8_lossy(key.clone()).to_string();
+                let key = String::from_utf8_lossy(key.clone().into()).to_string();
                 let val = to_json(val);
                 json_dict.insert(key, val);
             }

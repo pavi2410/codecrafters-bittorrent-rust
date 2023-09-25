@@ -23,6 +23,17 @@ struct Info {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+struct TrackerOptions {
+    info_hash: String,
+    peer_id: String,
+    port: u16,
+    uploaded: usize,
+    downloaded: usize,
+    left: usize,
+    compact: bool,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 struct TrackerResponse {
     // interval: usize,
     peers: Vec<Peer>,
@@ -82,16 +93,21 @@ fn main() {
 
         let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
 
-        let tracker_options = &[
-            ("info_hash", serde_urlencoded::to_string(info_hash(&torrent.info)).unwrap()),
-            ("peer_id", "00112233445566778899".to_string()),
-            ("port", "6881".to_string()),
-            ("uploaded", "0".to_string()),
-            ("downloaded", "0".to_string()),
-            ("left", torrent.info.length.to_string()),
-            ("compact", "1".to_string()),
-        ];
-        let tracker_url = format!("{}?{}", torrent.announce, serde_urlencoded::to_string(tracker_options).unwrap());
+        let tracker_options = TrackerOptions {
+            info_hash: hex::encode(info_hash(&torrent.info)),
+            peer_id: "00112233445566778899".to_string(),
+            port: 6881,
+            uploaded: 0,
+            downloaded: 0,
+            left: torrent.info.length,
+            compact: true,
+        };
+
+        let tracker_url = format!(
+            "{}?{}",
+            torrent.announce,
+            serde_urlencoded::to_string(tracker_options).unwrap()
+        );
 
         println!("{}", tracker_url);
 

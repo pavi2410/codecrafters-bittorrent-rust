@@ -11,7 +11,7 @@ fn main() {
 
     if command == "decode" {
         let encoded_value = &args[2];
-        let decoded_value = de::from_str(encoded_value).unwrap();
+        let decoded_value: Value = de::from_str(encoded_value).unwrap();
         println!("{}", decoded_value);
     } else {
         println!("unknown command: {}", args[1])

@@ -69,7 +69,17 @@ fn main() {
 
         let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
 
-        let resp = reqwest::blocking::get(&torrent.announce)
+        let tracker_options = &[
+            ("info_hash", info_hash(&torrent.info)),
+            ("peer_id", "00112233445566778899"),
+            ("port", "6881"),
+            ("uploaded", "0"),
+            ("downloaded", "0"),
+            ("left", &torrent.info.length.to_string()),
+        ]
+        let tracker_url = &torrent.announce + serde_urlencoded::to_string(tracker_options).unwrap().as_str();
+
+        let resp = reqwest::blocking::get(tracker_url)
             .unwrap()
             .text()
             .unwrap();

@@ -4,12 +4,12 @@ use std::env;
 // Available if you need it!
 use serde_bencode::{de, value::Value};
 
-fn display(value: &Value) {
+fn display(value: &Value) -> String {
     match value {
-        Value::Bytes(bytes) => println!("{:?}", String::from_utf8_lossy(bytes)),
-        Value::Int(num) => println!("{}", num),
-        Value::List(list) => println!("{:?}", list),
-        Value::Dict(dict) => println!("{:?}", dict),
+        Value::Bytes(bytes) => format!("{:?}", String::from_utf8_lossy(bytes)),
+        Value::Int(num) => format!("{}", num),
+        Value::List(list) => format!("{:?}", list.map(::display)),
+        Value::Dict(dict) => format!("{:?}", dict),
     }
 }
 
@@ -21,7 +21,7 @@ fn main() {
     if command == "decode" {
         let encoded_value = &args[2];
         let decoded_value: Value = de::from_str(encoded_value).unwrap();
-        display(&decoded_value);
+        println!("{}", display(&decoded_value));
     } else {
         println!("unknown command: {}", args[1])
     }

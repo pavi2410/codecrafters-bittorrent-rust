@@ -17,7 +17,7 @@ struct Torrent {
 #[derive(Debug, Deserialize)]
 struct Info {
     length: usize,
-    name: String,
+    name: Vec<u8>,
     #[serde(rename = "piece length")]
     piece_length: usize,
     pieces: Vec<u8>,

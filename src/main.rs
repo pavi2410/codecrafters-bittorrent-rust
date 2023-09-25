@@ -1,4 +1,4 @@
-use serde_json::{Value as JsonValue, Map};
+use serde_json::{Map, Value as JsonValue};
 use std::env;
 
 // Available if you need it!
@@ -9,7 +9,13 @@ fn to_json(value: &BencodeValue) -> JsonValue {
         BencodeValue::Bytes(bytes) => JsonValue::String(String::from_utf8_lossy(bytes).to_string()),
         BencodeValue::Int(num) => JsonValue::Number(num.to_owned().into()),
         BencodeValue::List(list) => JsonValue::Array(list.iter().map(|v| to_json(v)).collect()),
-        BencodeValue::Dict(dict) => JsonValue::Object(dict.to_owned().into()),
+        BencodeValue::Dict(dict) => {
+            let mut json_dict = Map::new();
+            for (key, val) in dict.iter() {
+                json_dict.insert(key.clone(), to_json(val));
+            }
+            JsonValue::Object(json_dict)
+        }
     }
 }
 

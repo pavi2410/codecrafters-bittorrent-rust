@@ -2,6 +2,20 @@ use std::env;
 use serde_json::{Map, Value as JsonValue};
 use serde_bencode::{de, value::Value as BencodeValue};
 
+
+struct Torrent {
+    announce: String,
+    info: Info,
+}
+
+struct Info {
+    length: usize,
+    name: String,
+    piece_length: usize,
+    pieces: Vec<u8>,
+}
+
+
 fn to_json(value: &BencodeValue) -> JsonValue {
     match value {
         BencodeValue::Bytes(bytes) => JsonValue::String(String::from_utf8_lossy(bytes).to_string()),
@@ -28,6 +42,15 @@ fn main() {
         let encoded_value = &args[2];
         let decoded_value: BencodeValue = de::from_str(encoded_value).unwrap();
         println!("{}", to_json(&decoded_value));
+    } else if command == "info" {
+        let file_name = &args[2];
+
+        let file_buf = std::fs::read(file_name).unwrap();
+
+        let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
+
+        println!("Tracker URL: {}", torrent.announce);
+        println!("Length: {}", torrent.info.length);
     } else {
         println!("unknown command: {}", args[1])
     }

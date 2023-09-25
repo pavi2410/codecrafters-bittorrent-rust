@@ -7,6 +7,7 @@ use std::env;
 use serde::Deserialize;
 use serde_json::{Map, Value as JsonValue};
 use serde_bencode::{de, value::Value as BencodeValue};
+use serde_bytes::ByteBuf;
 
 #[derive(Debug, Deserialize)]
 struct Torrent {
@@ -17,10 +18,10 @@ struct Torrent {
 #[derive(Debug, Deserialize)]
 struct Info {
     length: usize,
-    name: Vec<u8>,
+    name: String,
     #[serde(rename = "piece length")]
     piece_length: usize,
-    pieces: Vec<u8>,
+    pieces: ByteBuf,
 }
 
 

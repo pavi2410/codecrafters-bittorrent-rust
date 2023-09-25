@@ -5,12 +5,13 @@ use std::env;
 use serde_json::{Map, Value as JsonValue};
 use serde_bencode::{de, value::Value as BencodeValue};
 
-
+#[derive(Deserialize)]
 struct Torrent {
     announce: String,
     info: Info,
 }
 
+#[derive(Deserialize)]
 struct Info {
     length: usize,
     name: String,

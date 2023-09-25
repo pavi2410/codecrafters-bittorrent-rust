@@ -1,7 +1,5 @@
-use serde_json::{Map, Value as JsonValue};
 use std::env;
-
-// Available if you need it!
+use serde_json::{Map, Value as JsonValue};
 use serde_bencode::{de, value::Value as BencodeValue};
 
 fn to_json(value: &BencodeValue) -> JsonValue {

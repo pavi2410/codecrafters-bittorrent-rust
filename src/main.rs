@@ -83,7 +83,7 @@ fn main() {
         let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
 
         let tracker_options = &[
-            ("info_hash", String::from_utf8_lossy(info_hash(&torrent.info))),
+            ("info_hash", String::from_utf8_lossy(info_hash(&torrent.info)).to_string()),
             ("peer_id", "00112233445566778899".to_string()),
             ("port", "6881".to_string()),
             ("uploaded", "0".to_string()),

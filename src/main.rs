@@ -1,15 +1,15 @@
-use serde_json;
+use serde_json::{Value as JsonValue, Map};
 use std::env;
 
 // Available if you need it!
-use serde_bencode::{de, value::Value};
+use serde_bencode::{de, value::Value as BencodeValue};
 
-fn to_json(value: &Value) -> serde_json::Value {
+fn to_json(value: &BencodeValue) -> JsonValue {
     match value {
-        Value::Bytes(bytes) => serde_json::Value::String(String::from_utf8_lossy(bytes).to_string()),
-        Value::Int(num) => serde_json::Value::Number(num.to_owned().into()),
-        Value::List(list) => serde_json::Value::Array(list.to_owned().into_iter().map(|v| to_json(&v).into()).into()),
-        Value::Dict(dict) => serde_json::Value::Object(dict.to_owned().into()),
+        JsonValue::Bytes(bytes) => JsonValue::String(String::from_utf8_lossy(bytes).to_string()),
+        JsonValue::Int(num) => JsonValue::Number(num.to_owned().into()),
+        JsonValue::List(list) => JsonValue::Array(list.iter().map(|v| to_json(v)).collect()),
+        JsonValue::Dict(dict) => JsonValue::Object(dict.to_owned().into()),
     }
 }
 
@@ -20,7 +20,7 @@ fn main() {
 
     if command == "decode" {
         let encoded_value = &args[2];
-        let decoded_value: Value = de::from_str(encoded_value).unwrap();
+        let decoded_value: BencodeValue = de::from_str(encoded_value).unwrap();
         println!("{}", to_json(&decoded_value));
     } else {
         println!("unknown command: {}", args[1])

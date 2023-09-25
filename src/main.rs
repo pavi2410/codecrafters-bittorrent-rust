@@ -21,6 +21,18 @@ struct Info {
     pieces: ByteBuf,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+struct TrackerResponse {
+    interval: usize,
+    peers: Vec<Peer>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct Peer {
+    ip: u32,
+    port: u16,
+}
+
 fn to_json(value: &BencodeValue) -> JsonValue {
     match value {
         BencodeValue::Bytes(bytes) => JsonValue::String(String::from_utf8_lossy(bytes).to_string()),
@@ -56,7 +68,7 @@ fn main() {
 
         println!("Tracker URL: {}", torrent.announce);
         println!("Length: {}", torrent.info.length);
-        println!("Info Hash: {}", info_hash(&torrent.info));
+        println!("Info Hash: {}", hex::encode(info_hash(&torrent.info)));
         println!("Piece Length: {}", torrent.info.piece_length);
         println!("Piece Hashes:");
         for piece in torrent.info.pieces.chunks(20) {
@@ -87,14 +99,18 @@ fn main() {
             .text()
             .unwrap();
 
-        println!("{}", resp);
+        let tracker_response = de::from_str::<TrackerResponse>(&resp).unwrap();
+
+        for peers in tracker_response.peers {
+            println!("{}:{}", Ipv4Addr::from(peers.ip), peers.port);
+        }
     } else {
         println!("unknown command: {}", args[1])
     }
 }
 
-fn info_hash(info: &Info) -> String {
+fn info_hash(info: &Info) -> [u8] {
     let mut hasher = Sha1::new();
     hasher.update(serde_bencode::to_bytes(&info).unwrap());
-    hex::encode(hasher.finalize())
+    hasher.finalize()
 }

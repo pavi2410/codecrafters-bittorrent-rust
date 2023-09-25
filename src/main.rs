@@ -1,4 +1,5 @@
 use serde_json;
+use serde_json::Number;
 use std::env;
 
 // Available if you need it!
@@ -17,8 +18,8 @@ fn decode_bencoded_value(encoded_value: &str) -> serde_json::Value {
     } else if encoded_value.chars().next().unwrap() == 'i' { 
         let e_index = encoded_value.find("e").unwrap();
         let number_string = &encoded_value[1..e_index];
-        let number = number_string.parse::<i64>().unwrap();
-        return serde_json::Value::Number::from(number);
+        let number = number_string.parse::<Number>().unwrap();
+        return serde_json::Value::Number(number);
     } else {
         panic!("Unhandled encoded value: {}", encoded_value)
     }

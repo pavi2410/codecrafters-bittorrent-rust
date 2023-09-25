@@ -5,14 +5,12 @@ use std::fmt;
 // Available if you need it!
 use serde_bencode::{de, value::Value};
 
-impl fmt::Display for Value {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Value::Bytes(bytes) => write!(f, "{:?}", bytes),
-            Value::Int(num) => write!(f, "{}", num),
-            Value::List(list) => write!(f, "{:?}", list),
-            Value::Dict(dict) => write!(f, "{:?}", dict),
-        }
+fn display(value: &Value) {
+    match value {
+        Value::Bytes(bytes) => println!(f, "{:?}", bytes),
+        Value::Int(num) => println!(f, "{}", num),
+        Value::List(list) => println!(f, "{:?}", list),
+        Value::Dict(dict) => println!(f, "{:?}", dict),
     }
 }
 
@@ -24,7 +22,7 @@ fn main() {
     if command == "decode" {
         let encoded_value = &args[2];
         let decoded_value: Value = de::from_str(encoded_value).unwrap();
-        println!("{}", decoded_value);
+        display(decoded_value);
     } else {
         println!("unknown command: {}", args[1])
     }

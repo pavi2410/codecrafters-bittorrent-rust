@@ -4,6 +4,7 @@ use serde_json::{Map, Value as JsonValue};
 use serde_bencode::{de, value::Value as BencodeValue};
 use serde_bytes::ByteBuf;
 use sha1::{Sha1, Digest};
+use hex;
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Torrent {
@@ -65,5 +66,5 @@ fn main() {
 fn info_hash(info: &Info) -> String {
     let mut hasher = Sha1::new();
     hasher.update(serde_bencode::to_bytes(&info).unwrap());
-    hasher.finalize().to_string()
+    hex::encode(hasher.finalize())
 }

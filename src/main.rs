@@ -6,10 +6,10 @@ use serde_bencode::{de, value::Value};
 
 fn to_json(value: &Value) -> serde_json::Value {
     match value {
-        Value::Bytes(bytes) => serde_json::value::String(String::from_utf8_lossy(bytes)),
-        Value::Int(num) => serde_json::value::Number(num),
-        Value::List(list) => serde_json::value::Array(list),
-        Value::Dict(dict) => serde_json::value::Object(dict),
+        Value::Bytes(bytes) => serde_json::Value::String(String::from_utf8_lossy(bytes)),
+        Value::Int(num) => serde_json::Value::Number(num),
+        Value::List(list) => serde_json::Value::Array(list),
+        Value::Dict(dict) => serde_json::Value::Object(dict),
     }
 }
 

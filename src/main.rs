@@ -120,6 +120,8 @@ fn main() {
             .text()
             .unwrap();
 
+        println!("{}", resp);
+
         let tracker_response = de::from_str::<TrackerResponse>(&resp).unwrap();
 
         for peers in tracker_response.peers {

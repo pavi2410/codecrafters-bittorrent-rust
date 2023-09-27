@@ -117,10 +117,10 @@ fn main() {
 
         let resp = reqwest::blocking::get(tracker_url)
             .unwrap()
-            .bytes()
+            .text()
             .unwrap();
 
-        let tracker_response = de::from_bytes::<TrackerResponse>(&resp).unwrap();
+        let tracker_response = de::from_str::<TrackerResponse>(&resp).unwrap();
 
         for peers in tracker_response.peers {
             println!("{}:{}", Ipv4Addr::from(peers.ip), peers.port);

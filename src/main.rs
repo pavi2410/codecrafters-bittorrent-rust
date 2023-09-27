@@ -94,7 +94,7 @@ fn main() {
         let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
 
         println!("Info Hash: {}", hex::encode(&info_hash(&torrent.info)));
-        println!("Info Hash: {}", urlencode_bytes(&info_hash(&torrent.info)));
+        println!("Info Hash: {:?}", urlencode_bytes(&info_hash(&torrent.info)).chars());
 
         let tracker_options = TrackerRequest {
             info_hash: urlencode_bytes(&info_hash(&torrent.info)),

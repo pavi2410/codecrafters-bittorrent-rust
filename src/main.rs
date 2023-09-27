@@ -24,7 +24,7 @@ struct Info {
 
 #[derive(Debug, Deserialize, Serialize)]
 struct TrackerOptions {
-    info_hash: String,
+    info_hash: Vec<u8>,
     peer_id: String,
     port: u16,
     uploaded: usize,
@@ -94,7 +94,7 @@ fn main() {
         let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
 
         let tracker_options = TrackerOptions {
-            info_hash: hex::encode(info_hash(&torrent.info)),
+            info_hash: info_hash(&torrent.info),
             peer_id: "00112233445566778899".to_string(),
             port: 6881,
             uploaded: 0,

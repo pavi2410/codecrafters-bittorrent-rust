@@ -126,8 +126,8 @@ fn main() {
     }
 }
 
-fn info_hash(info: &Info) -> Vec<u8> {
+fn info_hash(info: &Info) -> [u8; 20] {
     let mut hasher = Sha1::new();
     hasher.update(serde_bencode::to_bytes(&info).unwrap());
-    hasher.finalize().to_vec()
+    hasher.finalize()
 }

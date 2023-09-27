@@ -24,7 +24,7 @@ struct Info {
 
 #[derive(Debug, Deserialize, Serialize)]
 struct TrackerOptions {
-    info_hash: Vec<u8>,
+    info_hash: [u8; 20],
     peer_id: String,
     port: u16,
     uploaded: usize,

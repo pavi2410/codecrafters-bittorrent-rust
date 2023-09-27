@@ -93,10 +93,10 @@ fn main() {
 
         let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
 
-        println!("Info Hash: {}", hex::encode(info_hash(&torrent.info)));
+        println!("Info Hash: {}", urlencode_bytes(&info_hash(&torrent.info)));
 
         let tracker_options = TrackerRequest {
-            info_hash: String::from_utf8_lossy(&info_hash(&torrent.info)).to_string(),
+            info_hash: urlencode_bytes(&info_hash(&torrent.info)),
             peer_id: "00112233445566778899".to_string(),
             port: 6881,
             uploaded: 0,
@@ -132,4 +132,11 @@ fn info_hash(info: &Info) -> [u8; 20] {
     let mut hasher = Sha1::new();
     hasher.update(serde_bencode::to_bytes(&info).unwrap());
     hasher.finalize().into()
+}
+
+fn urlencode_bytes(bytes: &[u8]) -> String {
+    bytes
+        .iter()
+        .map(|b| format!("%{:X}", b))
+        .collect::<String>()
 }

@@ -93,6 +93,8 @@ fn main() {
 
         let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
 
+        println!("Info Hash: {}", hex::encode(info_hash(&torrent.info)));
+
         let tracker_options = TrackerRequest {
             info_hash: String::from_utf8_lossy(&info_hash(&torrent.info)).to_string(),
             peer_id: "00112233445566778899".to_string(),

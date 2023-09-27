@@ -22,8 +22,9 @@ struct Info {
     pieces: ByteBuf,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 struct TrackerRequest {
+    #[serde(skip_serializing)]
     info_hash: String,
     peer_id: String,
     port: u16,
@@ -94,7 +95,6 @@ fn main() {
         let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
 
         println!("Info Hash: {}", hex::encode(&info_hash(&torrent.info)));
-        println!("Info Hash: {:?}", urlencode_bytes(&info_hash(&torrent.info)).chars());
 
         let tracker_options = TrackerRequest {
             info_hash: urlencode_bytes(&info_hash(&torrent.info)),
@@ -107,8 +107,9 @@ fn main() {
         };
 
         let tracker_url = format!(
-            "{}?{}",
+            "{}?info_hash={}&{}",
             torrent.announce,
+            tracker_options.info_hash.clone(),
             serde_urlencoded::to_string(tracker_options).unwrap()
         );
 
@@ -138,6 +139,6 @@ fn info_hash(info: &Info) -> [u8; 20] {
 fn urlencode_bytes(bytes: &[u8]) -> String {
     bytes
         .iter()
-        .map(|b| *b as char)
+        .map(|b| format!("%{:X}", b))
         .collect::<String>()
 }

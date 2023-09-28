@@ -95,8 +95,6 @@ fn main() {
 
         let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
 
-        println!("Info Hash: {}", hex::encode(&info_hash(&torrent.info)));
-
         let tracker_options = TrackerRequest {
             info_hash: urlencode_bytes(&info_hash(&torrent.info)),
             peer_id: "00112233445566778899".to_string(),
@@ -114,18 +112,12 @@ fn main() {
             serde_urlencoded::to_string(tracker_options).unwrap()
         );
 
-        println!("{}", tracker_url);
-
         let resp = reqwest::blocking::get(tracker_url)
             .unwrap()
             .bytes()
             .unwrap();
 
-        println!("{:?}", resp);
-
         let tracker_response = de::from_bytes::<TrackerResponse>(&resp).unwrap();
-
-        println!("{:?}", tracker_response.peers);
 
         for peer in tracker_response.peers.chunks(6) {
             let ip = Ipv4Addr::new(peer[0], peer[1], peer[2], peer[3]);

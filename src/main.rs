@@ -92,6 +92,7 @@ enum Commands {
 
         peer_endpoint: String,
     },
+    #[arg(name="download_piece")]
     DownloadPiece {
         #[arg(short = 'o', value_name = "FILE")]
         output_file: PathBuf,

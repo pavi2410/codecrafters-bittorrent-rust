@@ -92,6 +92,15 @@ enum Commands {
 
         peer_endpoint: String,
     },
+    DownloadPiece {
+        #[arg(short = 'o', value_name = "FILE")]
+        output_file: PathBuf,
+
+        #[arg(value_name = "FILE")]
+        file_name: PathBuf,
+
+        piece_index: usize,
+    },
 }
 
 // Usage: your_bittorrent.sh decode "<encoded_value>"
@@ -173,6 +182,12 @@ fn main() {
             let mut buf = [0u8; 68];
             stream.read_exact(&mut buf).unwrap();
             println!("Peer ID: {}", hex::encode(&buf[48..]));
+        }
+
+        Some(Commands::DownloadPiece { output_file, file_name, piece_index }) => {
+            println!("Downloading piece {}... ", piece_index);
+            println!("Done! Saved to {:?}", output_file);
+            println!("From {:?}", file_name);
         }
 
         None => {

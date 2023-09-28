@@ -1,3 +1,4 @@
+use clap::{Parser, Subcommand};
 use hex;
 use serde::{Deserialize, Serialize};
 use serde_bencode::{de, value::Value as BencodeValue};
@@ -6,6 +7,7 @@ use serde_json::{Map, Value as JsonValue};
 use sha1::{Digest, Sha1};
 use std::env;
 use std::net::Ipv4Addr;
+use std::path::PathBuf;
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Torrent {
@@ -64,68 +66,93 @@ fn to_json(value: &BencodeValue) -> JsonValue {
     }
 }
 
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    Decode {
+        #[arg(short, long)]
+        encoded_value: String,
+    },
+    Info {
+        #[arg(short, long, value_name = "FILE")]
+        file_name: PathBuf,
+    },
+    Peers {
+        #[arg(short, long, value_name = "FILE")]
+        file_name: PathBuf,
+    },
+}
+
 // Usage: your_bittorrent.sh decode "<encoded_value>"
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    let command = &args[1];
+    let cli = Cli::parse();
 
-    if command == "decode" {
-        let encoded_value = &args[2];
-        let decoded_value: BencodeValue = de::from_str(encoded_value).unwrap();
-        println!("{}", to_json(&decoded_value));
-    } else if command == "info" {
-        let file_name = &args[2];
-
-        let file_buf = std::fs::read(file_name).unwrap();
-
-        let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
-
-        println!("Tracker URL: {}", torrent.announce);
-        println!("Length: {}", torrent.info.length);
-        println!("Info Hash: {}", hex::encode(info_hash(&torrent.info)));
-        println!("Piece Length: {}", torrent.info.piece_length);
-        println!("Piece Hashes:");
-        for piece in torrent.info.pieces.chunks(20) {
-            println!("{}", hex::encode(piece));
+    match &cli.command {
+        Some(Commands::Decode { encoded_value }) => {
+            let decoded_value: BencodeValue = de::from_str(encoded_value).unwrap();
+            println!("{}", to_json(&decoded_value));
         }
-    } else if command == "peers" {
-        let file_name = &args[2];
 
-        let file_buf = std::fs::read(file_name).unwrap();
+        Some(Commands::Info { file_name }) => {
+            let file_buf = std::fs::read(file_name).unwrap();
 
-        let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
+            let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
 
-        let tracker_options = TrackerRequest {
-            info_hash: urlencode_bytes(&info_hash(&torrent.info)),
-            peer_id: "00112233445566778899".to_string(),
-            port: 6881,
-            uploaded: 0,
-            downloaded: 0,
-            left: torrent.info.length,
-            compact: 1,
-        };
-
-        let tracker_url = format!(
-            "{}?info_hash={}&{}",
-            torrent.announce,
-            tracker_options.info_hash.clone(),
-            serde_urlencoded::to_string(tracker_options).unwrap()
-        );
-
-        let resp = reqwest::blocking::get(tracker_url)
-            .unwrap()
-            .bytes()
-            .unwrap();
-
-        let tracker_response = de::from_bytes::<TrackerResponse>(&resp).unwrap();
-
-        for peer in tracker_response.peers.chunks(6) {
-            let ip = Ipv4Addr::new(peer[0], peer[1], peer[2], peer[3]);
-            let port = u16::from_be_bytes([peer[4], peer[5]]);
-            println!("{}:{}", ip, port);
+            println!("Tracker URL: {}", torrent.announce);
+            println!("Length: {}", torrent.info.length);
+            println!("Info Hash: {}", hex::encode(info_hash(&torrent.info)));
+            println!("Piece Length: {}", torrent.info.piece_length);
+            println!("Piece Hashes:");
+            for piece in torrent.info.pieces.chunks(20) {
+                println!("{}", hex::encode(piece));
+            }
         }
-    } else {
-        println!("unknown command: {}", args[1])
+
+        Some(Commands::Peers { file_name }) => {
+            let file_buf = std::fs::read(file_name).unwrap();
+
+            let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
+
+            let tracker_options = TrackerRequest {
+                info_hash: urlencode_bytes(&info_hash(&torrent.info)),
+                peer_id: "00112233445566778899".to_string(),
+                port: 6881,
+                uploaded: 0,
+                downloaded: 0,
+                left: torrent.info.length,
+                compact: 1,
+            };
+
+            let tracker_url = format!(
+                "{}?info_hash={}&{}",
+                torrent.announce,
+                tracker_options.info_hash.clone(),
+                serde_urlencoded::to_string(tracker_options).unwrap()
+            );
+
+            let resp = reqwest::blocking::get(tracker_url)
+                .unwrap()
+                .bytes()
+                .unwrap();
+
+            let tracker_response = de::from_bytes::<TrackerResponse>(&resp).unwrap();
+
+            for peer in tracker_response.peers.chunks(6) {
+                let ip = Ipv4Addr::new(peer[0], peer[1], peer[2], peer[3]);
+                let port = u16::from_be_bytes([peer[4], peer[5]]);
+                println!("{}:{}", ip, port);
+            }
+        }
+
+        None => {
+            println!("Unknown command");
+        }
     }
 }
 

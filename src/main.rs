@@ -128,9 +128,9 @@ fn main() {
         println!("{:?}", tracker_response.peers);
 
         for peers in tracker_response.peers.chunks(6) {
-            // println!("{}:{:?}", Ipv4Addr::from(&peers[..4]), &peers[4..]);
+            println!("{}:{:?}", Ipv4Addr::new(peer[0], peer[1], peer[2], peer[3]), peers[4] << 8 | peers[5]);
             println!("peer: {:?}", peers);
-            println!("peer: {:?} {:?}", peers[0], peers[1]);
+            println!("peer: {:?}:{:?}:{}:{}", peers[0], peers[1]);
         }
     } else {
         println!("unknown command: {}", args[1])

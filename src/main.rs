@@ -5,7 +5,8 @@ use serde_bencode::{de, value::Value as BencodeValue};
 use serde_bytes::ByteBuf;
 use serde_json::{Map, Value as JsonValue};
 use sha1::{Digest, Sha1};
-use std::net::Ipv4Addr;
+use std::io::{Write, Read};
+use std::net::{Ipv4Addr, TcpStream};
 use std::path::PathBuf;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -85,6 +86,12 @@ enum Commands {
         #[arg(value_name = "FILE")]
         file_name: PathBuf,
     },
+    Handshake {
+        #[arg(value_name = "FILE")]
+        file_name: PathBuf,
+
+        peer_endpoint: String,
+    },
 }
 
 // Usage: your_bittorrent.sh decode "<encoded_value>"
@@ -146,6 +153,26 @@ fn main() {
                 let port = u16::from_be_bytes([peer[4], peer[5]]);
                 println!("{}:{}", ip, port);
             }
+        }
+
+        Some(Commands::Handshake { file_name, peer_endpoint }) => {
+            let file_buf = std::fs::read(file_name).unwrap();
+
+            let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
+
+            let info_hash = info_hash(&torrent.info);
+
+            let mut stream = TcpStream::connect(peer_endpoint.as_str()).unwrap();
+
+            stream.write(&[19]).unwrap();
+            stream.write(b"BitTorrent protocol").unwrap();
+            stream.write(&[0, 0, 0, 0, 0, 0, 0, 0]).unwrap();
+            stream.write(&info_hash).unwrap();
+            stream.write(b"00112233445566778899").unwrap();
+
+            let mut buf = [0u8; 68];
+            stream.read_exact(&mut buf).unwrap();
+            println!("Peer ID: {}", hex::encode(&buf[48..]));
         }
 
         None => {

@@ -125,12 +125,12 @@ fn main() {
 
         let tracker_response = de::from_bytes::<TrackerResponse>(&resp).unwrap();
 
-        println!("{:#?}", tracker_response.peers);
+        println!("{:?}", tracker_response.peers);
 
-        // for peers in tracker_response.peers.chunks(6) {
-        //     println!("{}:{:?}", Ipv4Addr::from(peers[..4]), peers[4..]);
-        //     println!("peer: {:?}", peers);
-        // }
+        for peers in tracker_response.peers.chunks(6) {
+            println!("{}:{:?}", Ipv4Addr::from(peers[..4]), peers[4..]);
+            println!("peer: {:?}", peers);
+        }
     } else {
         println!("unknown command: {}", args[1])
     }

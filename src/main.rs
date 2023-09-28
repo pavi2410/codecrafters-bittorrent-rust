@@ -124,10 +124,12 @@ fn main() {
 
         let tracker_response = de::from_str::<TrackerResponse>(&resp).unwrap();
 
-        for peers in tracker_response.peers.chunks(6) {
-            // println!("{}:{:?}", Ipv4Addr::from(peers[..4]), peers[4..]);
-            println!("peer: {:?}", peers);
-        }
+        println!("{:#?}", tracker_response.peers);
+
+        // for peers in tracker_response.peers.chunks(6) {
+        //     // println!("{}:{:?}", Ipv4Addr::from(peers[..4]), peers[4..]);
+        //     println!("peer: {:?}", peers);
+        // }
     } else {
         println!("unknown command: {}", args[1])
     }

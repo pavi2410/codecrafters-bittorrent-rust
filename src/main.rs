@@ -38,7 +38,7 @@ struct TrackerRequest {
 struct TrackerResponse {
     // interval: usize,
     #[serde(with = "serde_bytes")]
-    peers: Vec<Peer>,
+    peers: Vec<u8>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -128,7 +128,7 @@ fn main() {
         println!("{:?}", tracker_response.peers);
 
         for peers in tracker_response.peers.chunks(6) {
-            println!("{}:{:?}", Ipv4Addr::from(&peers[..4]), &peers[4..]);
+            // println!("{}:{:?}", Ipv4Addr::from(&peers[..4]), &peers[4..]);
             println!("peer: {:?}", peers);
         }
     } else {

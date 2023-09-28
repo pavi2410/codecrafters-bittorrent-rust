@@ -120,7 +120,7 @@ fn main() {
             .bytes()
             .unwrap();
 
-        println!("{}", resp);
+        println!("{:?}", resp);
 
         let tracker_response = de::from_bytes::<TrackerResponse>(&resp).unwrap();
 

@@ -120,8 +120,8 @@ fn main() {
         let tracker_response = de::from_bytes::<TrackerResponse>(&resp).unwrap();
 
         for peer in tracker_response.peers.chunks(6) {
-            let ip = Ipv4Addr::from(&peer[0..4]);
-            let port = (peer[4] as u16) * 256 + (peer[5] as u16);
+            let ip = Ipv4Addr::new(peer[0], peer[1], peer[2], peer[3]);
+            let port = u16::from_be_bytes([peer[4], peer[5]]);
             println!("{}:{}", ip, port);
         }
     } else {

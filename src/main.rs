@@ -128,9 +128,9 @@ fn main() {
         println!("{:?}", tracker_response.peers);
 
         for peer in tracker_response.peers.chunks(6) {
-            println!("{}:{:?}", Ipv4Addr::new(peer[0], peer[1], peer[2], peer[3]), (peer[4] as u16) * 256 + (peer[5] as u16));
-            println!("peer: {:?}", peer);
-            // println!("peer: {:?}:{:?}:{}:{}", peer[0], peer[1]);
+            let ip = Ipv4Addr::new(peer[0], peer[1], peer[2], peer[3]);
+            let port = (peer[4] as u16) * 256 + (peer[5] as u16);
+            println!("{}:{}", ip, port);
         }
     } else {
         println!("unknown command: {}", args[1])

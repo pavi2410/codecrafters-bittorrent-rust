@@ -37,7 +37,7 @@ struct TrackerRequest {
 #[derive(Debug, Deserialize, Serialize)]
 struct TrackerResponse {
     // interval: usize,
-    peers: ByteBuf,
+    peers: Vec<Peer>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

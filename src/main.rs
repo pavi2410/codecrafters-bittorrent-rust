@@ -130,6 +130,7 @@ fn main() {
         for peers in tracker_response.peers.chunks(6) {
             // println!("{}:{:?}", Ipv4Addr::from(&peers[..4]), &peers[4..]);
             println!("peer: {:?}", peers);
+            println!("peer: {:?} {:?}", peers[0], peers[1]);
         }
     } else {
         println!("unknown command: {}", args[1])

@@ -127,7 +127,7 @@ fn main() {
 
         println!("{:?}", tracker_response.peers);
 
-        for peers in tracker_response.peers.chunks(6) {
+        for peers in tracker_response.peers.chunks_exact(6) {
             println!("{}:{:?}", Ipv4Addr::from(peers[..4]), peers[4..]);
             println!("peer: {:?}", peers);
         }

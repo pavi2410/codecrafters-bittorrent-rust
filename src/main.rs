@@ -38,7 +38,7 @@ struct TrackerRequest {
 struct TrackerResponse {
     // interval: usize,
     #[serde(with = "serde_bytes")]
-    peers: Vec<u8>,
+    peers: Vec<Peer>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

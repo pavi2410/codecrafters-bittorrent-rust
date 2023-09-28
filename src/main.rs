@@ -5,7 +5,6 @@ use serde_bencode::{de, value::Value as BencodeValue};
 use serde_bytes::ByteBuf;
 use serde_json::{Map, Value as JsonValue};
 use sha1::{Digest, Sha1};
-use std::env;
 use std::net::Ipv4Addr;
 use std::path::PathBuf;
 
@@ -76,15 +75,14 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Decode {
-        #[arg(short, long)]
         encoded_value: String,
     },
     Info {
-        #[arg(short, long, value_name = "FILE")]
+        #[arg(value_name = "FILE")]
         file_name: PathBuf,
     },
     Peers {
-        #[arg(short, long, value_name = "FILE")]
+        #[arg(value_name = "FILE")]
         file_name: PathBuf,
     },
 }

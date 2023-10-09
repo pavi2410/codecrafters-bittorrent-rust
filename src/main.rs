@@ -380,6 +380,8 @@ fn main() {
 
             println!("Expecting {} blocks", recv_blocks_len);
 
+            println!("Piece length: {}", torrent.info.piece_length);
+
             for (i, block) in req_blocks.enumerate() {
                 let request = PeerMessage::Request {
                     index: *piece_index as u32,

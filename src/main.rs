@@ -390,6 +390,8 @@ fn main() {
                 let block = PeerMessage::read_from_stream(&mut stream);
                 match block {
                     PeerMessage::Piece { begin, block, .. } => {
+                        println!("Received block at {}", begin);
+                        
                         out_file
                             .seek(std::io::SeekFrom::Start(begin as u64))
                             .unwrap();

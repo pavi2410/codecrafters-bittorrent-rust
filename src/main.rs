@@ -67,7 +67,7 @@ fn to_json(value: &BencodeValue) -> JsonValue {
 }
 
 impl Torrent {
-    fn from_file(file_name: &str) -> Result<Torrent, String> {
+    fn from_file(file_name: &PathBuf) -> Result<Torrent, String> {
         let file_buf = std::fs::read(file_name).unwrap();
 
         let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();

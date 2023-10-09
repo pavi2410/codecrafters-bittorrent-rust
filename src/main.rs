@@ -119,7 +119,7 @@ impl PeerMessage {
                 begin,
                 length,
             } => {
-                stream.write(&[13, 0, 0, 0, 6]).unwrap();
+                stream.write(&[0, 0, 0, 13, 6]).unwrap();
                 stream.write(&index.to_be_bytes()).unwrap();
                 stream.write(&begin.to_be_bytes()).unwrap();
                 stream.write(&length.to_be_bytes()).unwrap();

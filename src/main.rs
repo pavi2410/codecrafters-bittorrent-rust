@@ -378,6 +378,8 @@ fn main() {
             let req_blocks = torrent.info.pieces.chunks(BLOCK_SIZE); 
             let recv_blocks_len = req_blocks.len();
 
+            println!("Expecting {} blocks", recv_blocks_len);
+
             for (i, block) in req_blocks.enumerate() {
                 let request = PeerMessage::Request {
                     index: *piece_index as u32,

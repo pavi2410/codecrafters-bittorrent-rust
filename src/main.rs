@@ -375,7 +375,7 @@ fn main() {
                 .open(output_file_name)
                 .unwrap();
 
-            let total_blocks = torrent.info.piece_length.div_ceil(BLOCK_SIZE);
+            let total_blocks = (torrent.info.piece_length as f32 / BLOCK_SIZE as f32).ceil() as usize;
 
             println!("Expecting {} blocks", total_blocks);
 

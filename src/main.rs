@@ -66,6 +66,16 @@ fn to_json(value: &BencodeValue) -> JsonValue {
     }
 }
 
+impl Torrent {
+    fn from_file(file_name: &str) -> Result<Torrent, String> {
+        let file_buf = std::fs::read(file_name).unwrap();
+
+        let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
+
+        torrent
+    }
+}
+
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
@@ -186,6 +196,12 @@ fn main() {
         }
 
         Some(Commands::DownloadPiece { output_file, file_name, piece_index }) => {
+            let file_buf = std::fs::read(file_name).unwrap();
+
+            let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
+
+
+            
             println!("Downloading piece {}... ", piece_index);
             println!("Done! Saved to {:?}", output_file);
             println!("From {:?}", file_name);

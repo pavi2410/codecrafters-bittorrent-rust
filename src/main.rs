@@ -74,10 +74,12 @@ impl Torrent {
 
         Ok(torrent)
     }
+}
 
+impl Info {
     fn get_info_hash(&self) -> [u8; 20] {
         let mut hasher = Sha1::new();
-        hasher.update(serde_bencode::to_bytes(&self.info).unwrap());
+        hasher.update(serde_bencode::to_bytes(&self).unwrap());
         hasher.finalize().into()
     }
 }
@@ -158,9 +160,11 @@ fn main() {
         Some(Commands::Info { file_name }) => {
             let torrent = Torrent::from_file(file_name).unwrap();
 
+            let info_hash = torrent.info.get_info_hash();
+
             println!("Tracker URL: {}", torrent.announce);
             println!("Length: {}", torrent.info.length);
-            println!("Info Hash: {}", hex::encode(&torrent.get_info_hash()));
+            println!("Info Hash: {}", hex::encode(&info_hash));
             println!("Piece Length: {}", torrent.info.piece_length);
             println!("Piece Hashes:");
             for piece in torrent.info.pieces.chunks(20) {
@@ -171,8 +175,10 @@ fn main() {
         Some(Commands::Peers { file_name }) => {
             let torrent = Torrent::from_file(file_name).unwrap();
 
+            let info_hash = torrent.info.get_info_hash();
+
             let tracker_options = TrackerRequest {
-                info_hash: urlencode_bytes(&torrent.get_info_hash()),
+                info_hash: urlencode_bytes(&info_hash),
                 peer_id: "00112233445566778899".to_string(),
                 port: 6881,
                 uploaded: 0,
@@ -198,7 +204,7 @@ fn main() {
         Some(Commands::Handshake { file_name, peer_endpoint }) => {
             let torrent = Torrent::from_file(file_name).unwrap();
 
-            let info_hash = torrent.get_info_hash();
+            let info_hash = torrent.info.get_info_hash();
 
             let mut stream = TcpStream::connect(peer_endpoint.as_str()).unwrap();
 
@@ -216,8 +222,10 @@ fn main() {
         Some(Commands::DownloadPiece { output_file, file_name, piece_index }) => {
             let torrent = Torrent::from_file(file_name).unwrap();
 
+            let info_hash = torrent.info.get_info_hash();
+
             let tracker_options = TrackerRequest {
-                info_hash: urlencode_bytes(&torrent.get_info_hash()),
+                info_hash: urlencode_bytes(&info_hash),
                 peer_id: "00112233445566778899".to_string(),
                 port: 6881,
                 uploaded: 0,
@@ -242,7 +250,7 @@ fn main() {
             stream.write(&[19]).unwrap();
             stream.write(b"BitTorrent protocol").unwrap();
             stream.write(&[0, 0, 0, 0, 0, 0, 0, 0]).unwrap();
-            stream.write(&torrent.get_info_hash()).unwrap();
+            stream.write(&info_hash).unwrap();
             stream.write(b"00112233445566778899").unwrap();
 
             let mut buf = [0u8; 68];

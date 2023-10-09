@@ -374,14 +374,19 @@ fn main() {
                 .open(output_file_name)
                 .unwrap();
 
-            for (i, block) in torrent.info.pieces.chunks(BLOCK_SIZE).enumerate() {
+            let req_blocks = torrent.info.pieces.chunks(BLOCK_SIZE); 
+            let recv_blocks_len = req_blocks.len();
+
+            for (i, block) in req_blocks.enumerate() {
                 let request = PeerMessage::Request {
                     index: *piece_index as u32,
                     begin: (i * BLOCK_SIZE) as u32,
                     length: block.len() as u32,
                 };
                 request.write_to_stream(&mut stream);
+            }
 
+            for _ in 0..recv_blocks_len {
                 let block = PeerMessage::read_from_stream(&mut stream);
                 match block {
                     PeerMessage::Piece { begin, block, .. } => {
@@ -395,6 +400,8 @@ fn main() {
                     _ => panic!("Expected piece"),
                 }
             }
+
+            println!("Piece {} downloaded to {:?}", piece_index, output_file_name);
         }
 
         None => {

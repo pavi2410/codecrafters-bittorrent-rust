@@ -401,7 +401,7 @@ fn main() {
                 }
             }
 
-            println!("Piece {} downloaded to {:?}", piece_index, output_file_name);
+            println!("Piece {} downloaded to {}", piece_index, output_file_name.display());
         }
 
         None => {

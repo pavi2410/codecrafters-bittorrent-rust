@@ -76,6 +76,23 @@ impl Torrent {
     }
 }
 
+impl TrackerResponse {
+    fn get_peers(&self) -> Vec<Peer> {
+        self.peers
+        .chunks(6)
+        .map(|chunk| {
+            let ip = Ipv4Addr::new(chunk[0], chunk[1], chunk[2], chunk[3]);
+            let port = u16::from_be_bytes([chunk[4], chunk[5]]);
+           
+            Peer {
+                ip,
+                port
+            }
+        })
+        .collect::<Vec<_>>()
+    }
+}
+
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
@@ -125,9 +142,7 @@ fn main() {
         }
 
         Some(Commands::Info { file_name }) => {
-            let file_buf = std::fs::read(file_name).unwrap();
-
-            let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
+            let torrent = Torrent::from_file(file_name).unwrap();
 
             println!("Tracker URL: {}", torrent.announce);
             println!("Length: {}", torrent.info.length);
@@ -140,9 +155,7 @@ fn main() {
         }
 
         Some(Commands::Peers { file_name }) => {
-            let file_buf = std::fs::read(file_name).unwrap();
-
-            let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
+            let torrent = Torrent::from_file(file_name).unwrap();
 
             let tracker_options = TrackerRequest {
                 info_hash: urlencode_bytes(&info_hash(&torrent.info)),
@@ -168,17 +181,13 @@ fn main() {
 
             let tracker_response = de::from_bytes::<TrackerResponse>(&resp).unwrap();
 
-            for peer in tracker_response.peers.chunks(6) {
-                let ip = Ipv4Addr::new(peer[0], peer[1], peer[2], peer[3]);
-                let port = u16::from_be_bytes([peer[4], peer[5]]);
-                println!("{}:{}", ip, port);
+            for peer in tracker_response.get_peers() {
+                println!("{}:{}", peer.ip, peer.port);
             }
         }
 
         Some(Commands::Handshake { file_name, peer_endpoint }) => {
-            let file_buf = std::fs::read(file_name).unwrap();
-
-            let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
+            let torrent = Torrent::from_file(file_name).unwrap();
 
             let info_hash = info_hash(&torrent.info);
 
@@ -197,8 +206,6 @@ fn main() {
 
         Some(Commands::DownloadPiece { output_file, file_name, piece_index }) => {
             let torrent = Torrent::from_file(file_name).unwrap();
-
-
             
             println!("Downloading piece {}... ", piece_index);
             println!("Done! Saved to {:?}", output_file);

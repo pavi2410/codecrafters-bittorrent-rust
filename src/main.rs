@@ -371,6 +371,8 @@ fn main() {
             // unchoke receive
             PeerMessage::read_from_stream(&mut stream);
 
+            println!("Unchoked");
+
             // request send and piece receive
 
             let mut out_file = std::fs::OpenOptions::new()

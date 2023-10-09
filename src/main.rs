@@ -236,6 +236,8 @@ fn main() {
 
             let tracker_url = tracker_options.build_tracker_url(torrent.announce);
 
+            println!("{}", tracker_url);
+
             let resp = reqwest::blocking::get(tracker_url)
                 .unwrap()
                 .text()

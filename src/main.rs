@@ -45,7 +45,7 @@ struct TrackerResponse {
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Peer {
-    ip: u32,
+    ip: Ipv4Addr,
     port: u16,
 }
 

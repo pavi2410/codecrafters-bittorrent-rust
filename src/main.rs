@@ -5,9 +5,11 @@ use serde_bencode::{de, value::Value as BencodeValue};
 use serde_bytes::ByteBuf;
 use serde_json::{Map, Value as JsonValue};
 use sha1::{Digest, Sha1};
-use std::io::{Write, Read};
+use std::io::{Read, Write, Seek};
 use std::net::{Ipv4Addr, SocketAddrV4, TcpStream};
 use std::path::PathBuf;
+
+const BLOCK_SIZE: usize = 16 * 1024;
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Torrent {
@@ -48,6 +50,89 @@ struct TrackerResponse {
 //     ip: Ipv4Addr,
 //     port: u16,
 // }
+
+enum PeerMessage {
+    Unchoke,
+    Interested,
+    Bitfield,
+    Request {
+        index: u32,
+        begin: u32,
+        length: u32,
+    },
+    Piece {
+        index: u32,
+        begin: u32,
+        block: Vec<u8>,
+    },
+}
+
+impl PeerMessage {
+    fn read_from_stream(stream: &mut TcpStream) -> Self {
+        let mut buf = [0u8; 4];
+        stream.read_exact(&mut buf).unwrap();
+        let length = u32::from_be_bytes(buf);
+
+        let mut buf = [0u8; 1];
+        stream.read_exact(&mut buf).unwrap();
+        let message_id = buf[0];
+
+        let mut buf = vec![0u8; length as usize - 1];
+        stream.read_exact(&mut buf).unwrap();
+        let payload = buf;
+
+        match message_id {
+            1 => PeerMessage::Unchoke,
+            2 => PeerMessage::Interested,
+            5 => PeerMessage::Bitfield,
+            6 => PeerMessage::Request {
+                index: 0,
+                begin: 0,
+                length: 0,
+            },
+            7 => PeerMessage::Piece {
+                index: 0,
+                begin: 0,
+                block: vec![],
+            },
+            _ => panic!("Unknown message id: {}", message_id),
+        }
+    }
+
+    fn write_to_stream(&self, stream: &mut TcpStream) {
+        match &self {
+            PeerMessage::Unchoke => {
+                stream.write(&[1, 0, 0, 0, 1]).unwrap();
+            }
+            PeerMessage::Interested => {
+                stream.write(&[1, 0, 0, 0, 2]).unwrap();
+            }
+            PeerMessage::Bitfield => {
+                stream.write(&[1, 0, 0, 0, 5]).unwrap();
+            }
+            PeerMessage::Request {
+                index,
+                begin,
+                length,
+            } => {
+                stream.write(&[13, 0, 0, 0, 6]).unwrap();
+                stream.write(&index.to_be_bytes()).unwrap();
+                stream.write(&begin.to_be_bytes()).unwrap();
+                stream.write(&length.to_be_bytes()).unwrap();
+            }
+            PeerMessage::Piece {
+                index,
+                begin,
+                block,
+            } => {
+                stream.write(&[9, 0, 0, 0, 7]).unwrap();
+                stream.write(&index.to_be_bytes()).unwrap();
+                stream.write(&begin.to_be_bytes()).unwrap();
+                stream.write(&block).unwrap();
+            }
+        }
+    }
+}
 
 fn to_json(value: &BencodeValue) -> JsonValue {
     match value {
@@ -98,14 +183,14 @@ impl TrackerRequest {
 impl TrackerResponse {
     fn get_peers(&self) -> Vec<SocketAddrV4> {
         self.peers
-        .chunks(6)
-        .map(|chunk| {
-            let ip = Ipv4Addr::new(chunk[0], chunk[1], chunk[2], chunk[3]);
-            let port = u16::from_be_bytes([chunk[4], chunk[5]]);
-           
-            SocketAddrV4::new(ip, port)
-        })
-        .collect::<Vec<_>>()
+            .chunks(6)
+            .map(|chunk| {
+                let ip = Ipv4Addr::new(chunk[0], chunk[1], chunk[2], chunk[3]);
+                let port = u16::from_be_bytes([chunk[4], chunk[5]]);
+
+                SocketAddrV4::new(ip, port)
+            })
+            .collect::<Vec<_>>()
     }
 }
 
@@ -135,10 +220,10 @@ enum Commands {
 
         peer_endpoint: String,
     },
-    #[command(name="download_piece")]
+    #[command(name = "download_piece")]
     DownloadPiece {
         #[arg(short = 'o', value_name = "FILE")]
-        output_file: PathBuf,
+        output_file_name: PathBuf,
 
         #[arg(value_name = "FILE")]
         file_name: PathBuf,
@@ -201,7 +286,10 @@ fn main() {
             }
         }
 
-        Some(Commands::Handshake { file_name, peer_endpoint }) => {
+        Some(Commands::Handshake {
+            file_name,
+            peer_endpoint,
+        }) => {
             let torrent = Torrent::from_file(file_name).unwrap();
 
             let info_hash = torrent.info.get_info_hash();
@@ -219,7 +307,11 @@ fn main() {
             println!("Peer ID: {}", hex::encode(&buf[48..]));
         }
 
-        Some(Commands::DownloadPiece { output_file, file_name, piece_index }) => {
+        Some(Commands::DownloadPiece {
+            output_file_name,
+            file_name,
+            piece_index,
+        }) => {
             let torrent = Torrent::from_file(file_name).unwrap();
 
             let info_hash = torrent.info.get_info_hash();
@@ -258,19 +350,54 @@ fn main() {
 
             let mut stream = TcpStream::connect(peer).unwrap();
 
+            // handshake send
             stream.write(&[19]).unwrap();
             stream.write(b"BitTorrent protocol").unwrap();
             stream.write(&[0, 0, 0, 0, 0, 0, 0, 0]).unwrap();
             stream.write(&info_hash).unwrap();
             stream.write(b"00112233445566778899").unwrap();
 
+            // handshake receive
             let mut buf = [0u8; 68];
             stream.read_exact(&mut buf).unwrap();
             println!("Peer ID: {}", hex::encode(&buf[48..]));
-            
-            println!("Downloading piece {}... ", piece_index);
-            println!("Done! Saved to {:?}", output_file);
-            println!("From {:?}", file_name);
+
+            // bitfield receive
+            PeerMessage::read_from_stream(&mut stream);
+
+            // interested send
+            PeerMessage::Interested.write_to_stream(&mut stream);
+
+            // unchoke receive
+            PeerMessage::read_from_stream(&mut stream);
+
+            // request send and piece receive
+
+            let mut out_file = std::fs::OpenOptions::new()
+                .create(true)
+                .write(true)
+                .open(output_file_name)
+                .unwrap();
+
+            for (i, block) in torrent.info.pieces.chunks(BLOCK_SIZE).enumerate() {
+                let request = PeerMessage::Request {
+                    index: *piece_index as u32,
+                    begin: (i * BLOCK_SIZE) as u32,
+                    length: block.len() as u32,
+                };
+                request.write_to_stream(&mut stream);
+
+                let block = PeerMessage::read_from_stream(&mut stream);
+                match block {
+                    PeerMessage::Piece { begin, block, .. } => {
+                        out_file
+                            .seek(std::io::SeekFrom::Start(begin as u64))
+                            .unwrap();
+                        out_file.write(&block).unwrap();
+                    }
+                    _ => panic!("Expected piece"),
+                }
+            }
         }
 
         None => {

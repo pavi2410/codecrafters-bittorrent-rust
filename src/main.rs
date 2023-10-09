@@ -74,6 +74,23 @@ impl Torrent {
 
         Ok(torrent)
     }
+
+    fn get_info_hash(&self) -> [u8; 20] {
+        let mut hasher = Sha1::new();
+        hasher.update(serde_bencode::to_bytes(&self.info).unwrap());
+        hasher.finalize().into()
+    }
+}
+
+impl TrackerRequest {
+    fn build_tracker_url(&self, announce_endpoint: String) -> String {
+        format!(
+            "{}?info_hash={}&{}",
+            announce_endpoint,
+            self.info_hash.clone(),
+            serde_urlencoded::to_string(self).unwrap()
+        )
+    }
 }
 
 impl TrackerResponse {
@@ -146,7 +163,7 @@ fn main() {
 
             println!("Tracker URL: {}", torrent.announce);
             println!("Length: {}", torrent.info.length);
-            println!("Info Hash: {}", hex::encode(info_hash(&torrent.info)));
+            println!("Info Hash: {}", hex::encode(&torrent.get_info_hash()));
             println!("Piece Length: {}", torrent.info.piece_length);
             println!("Piece Hashes:");
             for piece in torrent.info.pieces.chunks(20) {
@@ -158,7 +175,7 @@ fn main() {
             let torrent = Torrent::from_file(file_name).unwrap();
 
             let tracker_options = TrackerRequest {
-                info_hash: urlencode_bytes(&info_hash(&torrent.info)),
+                info_hash: urlencode_bytes(&torrent.get_info_hash()),
                 peer_id: "00112233445566778899".to_string(),
                 port: 6881,
                 uploaded: 0,
@@ -167,12 +184,7 @@ fn main() {
                 compact: 1,
             };
 
-            let tracker_url = format!(
-                "{}?info_hash={}&{}",
-                torrent.announce,
-                tracker_options.info_hash.clone(),
-                serde_urlencoded::to_string(tracker_options).unwrap()
-            );
+            let tracker_url = tracker_options.build_tracker_url(torrent.announce);
 
             let resp = reqwest::blocking::get(tracker_url)
                 .unwrap()
@@ -189,7 +201,7 @@ fn main() {
         Some(Commands::Handshake { file_name, peer_endpoint }) => {
             let torrent = Torrent::from_file(file_name).unwrap();
 
-            let info_hash = info_hash(&torrent.info);
+            let info_hash = torrent.get_info_hash();
 
             let mut stream = TcpStream::connect(peer_endpoint.as_str()).unwrap();
 
@@ -216,12 +228,6 @@ fn main() {
             println!("Unknown command");
         }
     }
-}
-
-fn info_hash(info: &Info) -> [u8; 20] {
-    let mut hasher = Sha1::new();
-    hasher.update(serde_bencode::to_bytes(&info).unwrap());
-    hasher.finalize().into()
 }
 
 fn urlencode_bytes(bytes: &[u8]) -> String {

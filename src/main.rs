@@ -238,6 +238,15 @@ fn main() {
 
             let resp = reqwest::blocking::get(tracker_url)
                 .unwrap()
+                .text()
+                .unwrap();
+
+            println!("{}", resp);
+
+            return;
+
+            let resp = reqwest::blocking::get(tracker_url)
+                .unwrap()
                 .bytes()
                 .unwrap();
 

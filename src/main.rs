@@ -242,7 +242,7 @@ fn main() {
             stream.write(&[19]).unwrap();
             stream.write(b"BitTorrent protocol").unwrap();
             stream.write(&[0, 0, 0, 0, 0, 0, 0, 0]).unwrap();
-            stream.write(&info_hash).unwrap();
+            stream.write(&torrent.get_info_hash()).unwrap();
             stream.write(b"00112233445566778899").unwrap();
 
             let mut buf = [0u8; 68];

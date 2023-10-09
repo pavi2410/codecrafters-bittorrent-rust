@@ -196,9 +196,7 @@ fn main() {
         }
 
         Some(Commands::DownloadPiece { output_file, file_name, piece_index }) => {
-            let file_buf = std::fs::read(file_name).unwrap();
-
-            let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
+            let torrent = Torrent::from_file(file_name).unwrap();
 
 
             

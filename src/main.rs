@@ -6,7 +6,7 @@ use serde_bytes::ByteBuf;
 use serde_json::{Map, Value as JsonValue};
 use sha1::{Digest, Sha1};
 use std::io::{Write, Read};
-use std::net::{Ipv4Addr, SocketAddr, TcpStream};
+use std::net::{Ipv4Addr, SocketAddrV4, TcpStream};
 use std::path::PathBuf;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -94,14 +94,14 @@ impl TrackerRequest {
 }
 
 impl TrackerResponse {
-    fn get_peers(&self) -> Vec<SocketAddr> {
+    fn get_peers(&self) -> Vec<SocketAddrV4> {
         self.peers
         .chunks(6)
         .map(|chunk| {
             let ip = Ipv4Addr::new(chunk[0], chunk[1], chunk[2], chunk[3]);
             let port = u16::from_be_bytes([chunk[4], chunk[5]]);
            
-            SocketAddr::new(ip, port)
+            SocketAddrV4::new(ip, port)
         })
         .collect::<Vec<_>>()
     }

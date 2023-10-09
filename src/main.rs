@@ -52,6 +52,7 @@ struct TrackerResponse {
 //     port: u16,
 // }
 
+#[derive(Debug)]
 enum PeerMessage {
     Unchoke,
     Interested,
@@ -395,6 +396,7 @@ fn main() {
                         BLOCK_SIZE
                     } as u32,
                 };
+                println!("{} {:?}", i, request);
                 request.write_to_stream(&mut stream);
             }
 

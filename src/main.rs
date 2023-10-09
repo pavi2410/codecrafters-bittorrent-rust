@@ -10,6 +10,7 @@ use std::net::{Ipv4Addr, SocketAddrV4, TcpStream};
 use std::path::PathBuf;
 
 const BLOCK_SIZE: usize = 16 * 1024;
+const MY_PEER_ID: &str = "00112233445566778899";
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Torrent {
@@ -318,7 +319,7 @@ fn main() {
 
             let tracker_options = TrackerRequest {
                 info_hash: urlencode_bytes(&info_hash),
-                peer_id: "00112233445566778899".to_string(),
+                peer_id: MY_PEER_ID.to_string(),
                 port: 6881,
                 uploaded: 0,
                 downloaded: 0,
@@ -348,7 +349,7 @@ fn main() {
             stream.write(b"BitTorrent protocol").unwrap();
             stream.write(&[0, 0, 0, 0, 0, 0, 0, 0]).unwrap();
             stream.write(&info_hash).unwrap();
-            stream.write(b"00112233445566778899").unwrap();
+            stream.write(MY_PEER_ID.as_bytes()).unwrap();
 
             // handshake receive
             let mut buf = [0u8; 68];

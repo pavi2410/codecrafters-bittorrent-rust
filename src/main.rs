@@ -330,19 +330,12 @@ fn main() {
 
             println!("{}", tracker_url);
 
-            // let resp = reqwest::blocking::get(tracker_url)
-            //     .unwrap()
-            //     .text()
-            //     .unwrap();
-
-            // println!("{}", resp);
-
-            // return;
-
             let resp = reqwest::blocking::get(tracker_url)
                 .unwrap()
                 .bytes()
                 .unwrap();
+
+            println!("{}", resp);
 
             let tracker_response = de::from_bytes::<TrackerResponse>(&resp).unwrap();
 

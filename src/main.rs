@@ -91,9 +91,9 @@ impl PeerMessage {
                 length: 0,
             },
             7 => PeerMessage::Piece {
-                index: 0,
-                begin: 0,
-                block: vec![],
+                index: u32::from_be_bytes([payload[0], payload[1], payload[2], payload[3]]),
+                begin: u32::from_be_bytes([payload[4], payload[5], payload[6], payload[7]]),
+                block: payload[8..].to_vec(),
             },
             _ => panic!("Unknown message id: {}", message_id),
         }

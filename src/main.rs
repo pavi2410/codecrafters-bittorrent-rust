@@ -107,20 +107,20 @@ impl PeerMessage {
     fn write_to_stream(&self, stream: &mut TcpStream) {
         match &self {
             PeerMessage::Unchoke => {
-                stream.write(&[1, 0, 0, 0, 1]).unwrap();
+                stream.write(&[0, 0, 0, 1, 1]).unwrap();
             }
             PeerMessage::Interested => {
-                stream.write(&[1, 0, 0, 0, 2]).unwrap();
+                stream.write(&[0, 0, 0, 1, 2]).unwrap();
             }
             PeerMessage::Bitfield => {
-                stream.write(&[1, 0, 0, 0, 5]).unwrap();
+                stream.write(&[0, 0, 0, 1, 5]).unwrap();
             }
             PeerMessage::Request {
                 index,
                 begin,
                 length,
             } => {
-                stream.write(&(96u32.to_be_bytes())).unwrap();
+                stream.write(&(97u32.to_be_bytes())).unwrap();
                 stream.write(&[6]).unwrap();
                 stream.write(&index.to_be_bytes()).unwrap();
                 stream.write(&begin.to_be_bytes()).unwrap();
@@ -352,7 +352,7 @@ fn main() {
             // handshake send
             stream.write(&[19]).unwrap();
             stream.write(b"BitTorrent protocol").unwrap();
-            stream.write(&[0, 0, 0, 0, 0, 0, 0, 0]).unwrap();
+            stream.write(&[0; 8]).unwrap();
             stream.write(&info_hash).unwrap();
             stream.write(MY_PEER_ID.as_bytes()).unwrap();
 

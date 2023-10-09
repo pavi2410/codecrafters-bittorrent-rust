@@ -398,7 +398,7 @@ fn main() {
                 request.write_to_stream(&mut stream);
             }
 
-            for i in 0..total_blocks {
+            for i in 0..=total_blocks {
                 let block = PeerMessage::read_from_stream(&mut stream);
                 match block {
                     PeerMessage::Piece { begin, block, .. } => {

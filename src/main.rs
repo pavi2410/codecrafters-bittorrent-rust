@@ -398,11 +398,11 @@ fn main() {
                 request.write_to_stream(&mut stream);
             }
 
-            for _ in 0..total_blocks {
+            for i in 0..total_blocks {
                 let block = PeerMessage::read_from_stream(&mut stream);
                 match block {
                     PeerMessage::Piece { begin, block, .. } => {
-                        println!("Received block at {}", begin);
+                        println!("{} Received block at {}", i, begin);
 
                         out_file
                             .seek(std::io::SeekFrom::Start(begin as u64))

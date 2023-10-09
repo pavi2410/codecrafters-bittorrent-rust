@@ -78,6 +78,9 @@ impl PeerMessage {
         stream.read_exact(&mut buf).unwrap();
         let message_id = buf[0];
 
+        println!("Length: {}", length);
+        println!("Message ID: {}", message_id);
+
         let mut buf = vec![0u8; length as usize - 1];
         stream.read_exact(&mut buf).unwrap();
         let payload = buf;

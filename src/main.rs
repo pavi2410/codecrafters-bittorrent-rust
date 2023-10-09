@@ -6,7 +6,7 @@ use serde_bytes::ByteBuf;
 use serde_json::{Map, Value as JsonValue};
 use sha1::{Digest, Sha1};
 use std::io::{Write, Read};
-use std::net::{Ipv4Addr, TcpStream};
+use std::net::{Ipv4Addr, SocketAddr, TcpStream};
 use std::path::PathBuf;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -43,11 +43,11 @@ struct TrackerResponse {
     peers: Vec<u8>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-struct Peer {
-    ip: Ipv4Addr,
-    port: u16,
-}
+// #[derive(Debug, Deserialize, Serialize)]
+// struct Peer {
+//     ip: Ipv4Addr,
+//     port: u16,
+// }
 
 fn to_json(value: &BencodeValue) -> JsonValue {
     match value {
@@ -94,17 +94,14 @@ impl TrackerRequest {
 }
 
 impl TrackerResponse {
-    fn get_peers(&self) -> Vec<Peer> {
+    fn get_peers(&self) -> Vec<SocketAddr> {
         self.peers
         .chunks(6)
         .map(|chunk| {
             let ip = Ipv4Addr::new(chunk[0], chunk[1], chunk[2], chunk[3]);
             let port = u16::from_be_bytes([chunk[4], chunk[5]]);
            
-            Peer {
-                ip,
-                port
-            }
+            SocketAddr::new(ip, port)
         })
         .collect::<Vec<_>>()
     }
@@ -194,7 +191,7 @@ fn main() {
             let tracker_response = de::from_bytes::<TrackerResponse>(&resp).unwrap();
 
             for peer in tracker_response.get_peers() {
-                println!("{}:{}", peer.ip, peer.port);
+                println!("{}", peer);
             }
         }
 
@@ -218,6 +215,39 @@ fn main() {
 
         Some(Commands::DownloadPiece { output_file, file_name, piece_index }) => {
             let torrent = Torrent::from_file(file_name).unwrap();
+
+            let tracker_options = TrackerRequest {
+                info_hash: urlencode_bytes(&torrent.get_info_hash()),
+                peer_id: "00112233445566778899".to_string(),
+                port: 6881,
+                uploaded: 0,
+                downloaded: 0,
+                left: torrent.info.length,
+                compact: 1,
+            };
+
+            let tracker_url = tracker_options.build_tracker_url(torrent.announce);
+
+            let resp = reqwest::blocking::get(tracker_url)
+                .unwrap()
+                .bytes()
+                .unwrap();
+
+            let tracker_response = de::from_bytes::<TrackerResponse>(&resp).unwrap();
+
+            let peer = tracker_response.get_peers()[0];
+
+            let mut stream = TcpStream::connect(peer).unwrap();
+
+            stream.write(&[19]).unwrap();
+            stream.write(b"BitTorrent protocol").unwrap();
+            stream.write(&[0, 0, 0, 0, 0, 0, 0, 0]).unwrap();
+            stream.write(&info_hash).unwrap();
+            stream.write(b"00112233445566778899").unwrap();
+
+            let mut buf = [0u8; 68];
+            stream.read_exact(&mut buf).unwrap();
+            println!("Peer ID: {}", hex::encode(&buf[48..]));
             
             println!("Downloading piece {}... ", piece_index);
             println!("Done! Saved to {:?}", output_file);

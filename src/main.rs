@@ -72,7 +72,7 @@ impl Torrent {
 
         let torrent = de::from_bytes::<Torrent>(&file_buf).unwrap();
 
-        torrent
+        Ok(torrent)
     }
 }
 

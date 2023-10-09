@@ -396,6 +396,7 @@ fn main() {
                             .seek(std::io::SeekFrom::Start(begin as u64))
                             .unwrap();
                         out_file.write(&block).unwrap();
+                        out_file.rewind().unwrap();
                     }
                     _ => panic!("Expected piece"),
                 }

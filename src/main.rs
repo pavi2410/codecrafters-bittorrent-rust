@@ -82,9 +82,13 @@ impl PeerMessage {
         println!("Length: {}", length);
         println!("Message ID: {}", message_id);
 
-        let mut buf = vec![0u8; length as usize - 1];
-        stream.read_exact(&mut buf).unwrap();
-        let payload = buf;
+        let payload = if length > 1 {
+            let mut buf = vec![0u8; length as usize - 1];
+            stream.read_exact(&mut buf).unwrap();
+            buf
+        } else {
+            vec![]
+        };
 
         match message_id {
             1 => PeerMessage::Unchoke,
@@ -131,7 +135,7 @@ impl PeerMessage {
                 begin,
                 block,
             } => {
-                stream.write(&[9, 0, 0, 0, 7]).unwrap();
+                stream.write(&[0, 0, 0, 9, 7]).unwrap();
                 stream.write(&index.to_be_bytes()).unwrap();
                 stream.write(&begin.to_be_bytes()).unwrap();
                 stream.write(&block).unwrap();
@@ -380,7 +384,8 @@ fn main() {
                 .open(output_file_name)
                 .unwrap();
 
-            let total_blocks = (torrent.info.piece_length as f32 / BLOCK_SIZE as f32).ceil() as usize;
+            let total_blocks =
+                (torrent.info.piece_length as f32 / BLOCK_SIZE as f32).ceil() as usize;
 
             println!("Expecting {} blocks", total_blocks);
 

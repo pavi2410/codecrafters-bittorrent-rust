@@ -413,6 +413,6 @@ fn main() {
 fn urlencode_bytes(bytes: &[u8]) -> String {
     bytes
         .iter()
-        .map(|b| format!("%{:X}", b))
+        .map(|b| format!("%{:02X}", b))
         .collect::<String>()
 }

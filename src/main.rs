@@ -391,7 +391,7 @@ fn main() {
                     index: *piece_index as u32,
                     begin: (i * BLOCK_SIZE) as u32,
                     length: if i == total_blocks - 1 {
-                        torrent.info.piece_length % BLOCK_SIZE
+                        torrent.info.piece_length - i * BLOCK_SIZE
                     } else {
                         BLOCK_SIZE
                     } as u32,
@@ -400,7 +400,7 @@ fn main() {
                 request.write_to_stream(&mut stream);
             }
 
-            for i in 0..=total_blocks {
+            for i in 0..total_blocks {
                 let block = PeerMessage::read_from_stream(&mut stream);
                 match block {
                     PeerMessage::Piece { begin, block, .. } => {

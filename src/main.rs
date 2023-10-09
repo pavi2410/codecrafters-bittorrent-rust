@@ -5,7 +5,7 @@ use serde_bencode::{de, value::Value as BencodeValue};
 use serde_bytes::ByteBuf;
 use serde_json::{Map, Value as JsonValue};
 use sha1::{Digest, Sha1};
-use std::io::{Read, Write, Seek};
+use std::io::{Read, Seek, Write};
 use std::net::{Ipv4Addr, SocketAddrV4, TcpStream};
 use std::path::PathBuf;
 
@@ -375,28 +375,31 @@ fn main() {
                 .open(output_file_name)
                 .unwrap();
 
-            let req_blocks = torrent.info.pieces.chunks(BLOCK_SIZE); 
-            let recv_blocks_len = req_blocks.len();
+            let total_blocks = torrent.info.piece_length.div_ceil(BLOCK_SIZE);
 
-            println!("Expecting {} blocks", recv_blocks_len);
+            println!("Expecting {} blocks", total_blocks);
 
             println!("Piece length: {}", torrent.info.piece_length);
 
-            for (i, block) in req_blocks.enumerate() {
+            for i in 0..total_blocks {
                 let request = PeerMessage::Request {
                     index: *piece_index as u32,
                     begin: (i * BLOCK_SIZE) as u32,
-                    length: block.len() as u32,
+                    length: if i == total_blocks - 1 {
+                        torrent.info.piece_length % BLOCK_SIZE
+                    } else {
+                        BLOCK_SIZE
+                    } as u32,
                 };
                 request.write_to_stream(&mut stream);
             }
 
-            for _ in 0..recv_blocks_len {
+            for _ in 0..total_blocks {
                 let block = PeerMessage::read_from_stream(&mut stream);
                 match block {
                     PeerMessage::Piece { begin, block, .. } => {
                         println!("Received block at {}", begin);
-                        
+
                         out_file
                             .seek(std::io::SeekFrom::Start(begin as u64))
                             .unwrap();
@@ -407,7 +410,11 @@ fn main() {
                 }
             }
 
-            println!("Piece {} downloaded to {}", piece_index, output_file_name.display());
+            println!(
+                "Piece {} downloaded to {}",
+                piece_index,
+                output_file_name.display()
+            );
         }
 
         None => {

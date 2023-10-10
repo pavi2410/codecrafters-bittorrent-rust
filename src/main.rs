@@ -5,7 +5,7 @@ use serde_bencode::{de, value::Value as BencodeValue};
 use serde_bytes::ByteBuf;
 use serde_json::{Map, Value as JsonValue};
 use sha1::{Digest, Sha1};
-use std::io::{Read, Seek, Write};
+use std::io::{Read, Seek, SeekFrom, Write};
 use std::net::{Ipv4Addr, SocketAddrV4, TcpStream};
 use std::path::PathBuf;
 
@@ -482,13 +482,18 @@ fn main() {
             let total_pieces = (torrent.info.length as f32 / torrent.info.piece_length as f32).ceil() as usize;
 
             for piece_index in 0..total_pieces {
-                let piece_length = if piece_index == total_pieces - 1 {
+                let piece_size = if piece_index == total_pieces - 1 {
                     torrent.info.length % torrent.info.piece_length
                 } else {
                     torrent.info.piece_length
                 };
 
-                let piece = download_piece(&mut stream, piece_index, piece_length);
+                let piece = download_piece(&mut stream, piece_index, piece_size);
+
+                let piece_offset = piece_index * torrent.info.piece_length;
+
+                out_file.seek(SeekFrom::Start())
+                out_file.write(piece).unwrap();
             }
 
             println!(
@@ -511,10 +516,10 @@ fn urlencode_bytes(bytes: &[u8]) -> String {
         .collect::<String>()
 }
 
-fn download_piece(stream: &mut TcpStream, piece_index: usize, piece_length: usize) -> Vec<u8> {
-    let total_blocks = (piece_length as f32 / BLOCK_SIZE as f32).ceil() as usize;
+fn download_piece(stream: &mut TcpStream, piece_index: usize, piece_size: usize) -> Vec<u8> {
+    let total_blocks = (piece_size as f32 / BLOCK_SIZE as f32).ceil() as usize;
 
-    println!("Piece length: {}", piece_length);
+    println!("Piece length: {}", piece_size);
     println!("Expecting {} blocks", total_blocks);
 
     for i in 0..total_blocks {
@@ -522,7 +527,7 @@ fn download_piece(stream: &mut TcpStream, piece_index: usize, piece_length: usiz
             index: piece_index as u32,
             begin: (i * BLOCK_SIZE) as u32,
             length: if i == total_blocks - 1 {
-                piece_length - i * BLOCK_SIZE
+                piece_size - i * BLOCK_SIZE
             } else {
                 BLOCK_SIZE
             } as u32,
@@ -531,7 +536,7 @@ fn download_piece(stream: &mut TcpStream, piece_index: usize, piece_length: usiz
         request.write_to_stream(stream);
     }
 
-    let mut piece: Vec<u8> = vec![0; piece_length];
+    let mut piece: Vec<u8> = vec![0; piece_size];
 
     for i in 0..total_blocks {
         let block = PeerMessage::read_from_stream(stream);

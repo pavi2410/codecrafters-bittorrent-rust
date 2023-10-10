@@ -457,13 +457,13 @@ fn download_piece(stream: &mut TcpStream, piece_index: usize, piece_length: usiz
             } as u32,
         };
         println!("{} Requesting {:?}", i, request);
-        request.write_to_stream(&mut stream);
+        request.write_to_stream(stream);
     }
 
     let mut piece: Vec<u8> = Vec::with_capacity(piece_length);
 
     for i in 0..total_blocks {
-        let block = PeerMessage::read_from_stream(&mut stream);
+        let block = PeerMessage::read_from_stream(stream);
         match block {
             PeerMessage::Piece { begin, block, .. } => {
                 println!("{} Received block at {}", i, begin);

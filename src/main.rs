@@ -492,8 +492,8 @@ fn main() {
 
                 let piece_offset = piece_index * torrent.info.piece_length;
 
-                out_file.seek(SeekFrom::Start())
-                out_file.write(piece).unwrap();
+                out_file.seek(SeekFrom::Start(piece_size as u64)).unwrap();
+                out_file.write(&piece).unwrap();
             }
 
             println!(
@@ -544,7 +544,7 @@ fn download_piece(stream: &mut TcpStream, piece_index: usize, piece_size: usize)
             PeerMessage::Piece { begin, block, .. } => {
                 println!("{} Received block at {}", i, begin);
 
-                let begin = begin as usize;
+                // let begin = begin as usize;
 
                 for i in 0..block.len() {
                     piece[begin + i] = block[i];

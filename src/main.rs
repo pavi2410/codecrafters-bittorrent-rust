@@ -411,7 +411,7 @@ fn main() {
             );
         }
 
-        Some(Commands::DownloadPiece {
+        Some(Commands::Download {
             output_file_name,
             file_name,
         }) => {

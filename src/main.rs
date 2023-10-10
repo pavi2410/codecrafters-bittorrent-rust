@@ -405,7 +405,7 @@ fn main() {
                     index: *piece_index as u32,
                     begin: (i * BLOCK_SIZE) as u32,
                     length: if i == total_blocks - 1 {
-                        piece_length % BLOCK_SIZE
+                        piece_length - i * BLOCK_SIZE
                     } else {
                         BLOCK_SIZE
                     } as u32,

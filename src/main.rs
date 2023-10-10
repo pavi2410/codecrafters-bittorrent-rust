@@ -494,6 +494,7 @@ fn main() {
 
                 out_file.seek(SeekFrom::Start(piece_size as u64)).unwrap();
                 out_file.write(&piece).unwrap();
+                out_file.rewind().unwrap();
             }
 
             println!(

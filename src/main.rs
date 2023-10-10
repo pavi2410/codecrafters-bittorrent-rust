@@ -385,7 +385,7 @@ fn main() {
                 .unwrap();
 
 
-            let total_pieces = (torrent.info.length as f32 / torrent.info.piece_length as f32).ceil();
+            let total_pieces = (torrent.info.length as f32 / torrent.info.piece_length as f32).ceil() as usize;
 
             let piece_length = if piece_index == total_pieces - 1 {
                 torrent.info.length % torrent.info.piece_length

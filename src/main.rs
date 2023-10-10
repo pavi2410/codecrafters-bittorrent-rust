@@ -460,7 +460,7 @@ fn download_piece(stream: &mut TcpStream, piece_index: usize, piece_length: usiz
         request.write_to_stream(stream);
     }
 
-    let mut piece: Vec<u8> = Vec::with_capacity(piece_length);
+    let mut piece: Vec<u8> = vec![0; piece_length];
 
     for i in 0..total_blocks {
         let block = PeerMessage::read_from_stream(stream);

@@ -470,7 +470,9 @@ fn download_piece(stream: &mut TcpStream, piece_index: usize, piece_length: usiz
 
                 let begin = begin as usize;
 
-                piece[begin..begin+piece_length] = block;
+                for i in 0..block.len() {
+                    piece[begin + i] = block[i];
+                }
             }
             _ => panic!("Expected piece"),
         }

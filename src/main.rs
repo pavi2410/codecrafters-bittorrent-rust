@@ -238,7 +238,7 @@ enum Commands {
         #[arg(value_name = "FILE")]
         file_name: PathBuf,
 
-        piece_index: usize,
+        piece_index: Option<usize>,
     },
 }
 
@@ -387,54 +387,27 @@ fn main() {
 
             let total_pieces = (torrent.info.length as f32 / torrent.info.piece_length as f32).ceil() as usize;
 
-            let piece_length = if *piece_index == total_pieces - 1 {
-                torrent.info.length % torrent.info.piece_length
-            } else {
-                torrent.info.piece_length
-            };
-
-            let total_blocks =
-                (piece_length as f32 / BLOCK_SIZE as f32).ceil() as usize;
-
-            println!("Expecting {} blocks", total_blocks);
-
-            println!("Piece length: {}", piece_length);
-
-            for i in 0..total_blocks {
-                let request = PeerMessage::Request {
-                    index: *piece_index as u32,
-                    begin: (i * BLOCK_SIZE) as u32,
-                    length: if i == total_blocks - 1 {
-                        piece_length - i * BLOCK_SIZE
+            match *piece_index {
+                Some(piece_index) => {
+                    let piece_length = if piece_index == total_pieces - 1 {
+                        torrent.info.length % torrent.info.piece_length
                     } else {
-                        BLOCK_SIZE
-                    } as u32,
-                };
-                println!("{} {:?}", i, request);
-                request.write_to_stream(&mut stream);
-            }
+                        torrent.info.piece_length
+                    };
+                    download_piece(&mut stream, piece_index, piece_length);
+                }
 
-            for i in 0..total_blocks {
-                let block = PeerMessage::read_from_stream(&mut stream);
-                match block {
-                    PeerMessage::Piece { begin, block, .. } => {
-                        println!("{} Received block at {}", i, begin);
-
-                        out_file
-                            .seek(std::io::SeekFrom::Start(begin as u64))
-                            .unwrap();
-                        out_file.write(&block).unwrap();
-                        out_file.rewind().unwrap();
+                None => {
+                    for piece_index in 0..total_pieces {
+                        let piece_length = if piece_index == total_pieces - 1 {
+                            torrent.info.length % torrent.info.piece_length
+                        } else {
+                            torrent.info.piece_length
+                        };
+                        download_piece(&mut stream, piece_index, piece_length);
                     }
-                    _ => panic!("Expected piece"),
                 }
             }
-
-            println!(
-                "Piece {} downloaded to {}",
-                piece_index,
-                output_file_name.display()
-            );
         }
 
         None => {
@@ -448,4 +421,50 @@ fn urlencode_bytes(bytes: &[u8]) -> String {
         .iter()
         .map(|b| format!("%{:02X}", b))
         .collect::<String>()
+}
+
+fn download_piece(stream: &mut TcpStream, piece_index: usize, piece_length: usize) {
+    let total_blocks = (piece_length as f32 / BLOCK_SIZE as f32).ceil() as usize;
+
+    println!("Expecting {} blocks", total_blocks);
+
+    println!("Piece length: {}", piece_length);
+
+    for i in 0..total_blocks {
+        let request = PeerMessage::Request {
+            index: piece_index as u32,
+            begin: (i * BLOCK_SIZE) as u32,
+            length: if i == total_blocks - 1 {
+                piece_length - i * BLOCK_SIZE
+            } else {
+                BLOCK_SIZE
+            } as u32,
+        };
+        println!("{} {:?}", i, request);
+        request.write_to_stream(&mut stream);
+    }
+
+    for i in 0..total_blocks {
+        let block = PeerMessage::read_from_stream(&mut stream);
+        match block {
+            PeerMessage::Piece { begin, block, .. } => {
+                println!("{} Received block at {}", i, begin);
+
+                out_file
+                    .seek(std::io::SeekFrom::Start(begin as u64))
+                    .unwrap();
+                out_file.write(&block).unwrap();
+                out_file.rewind().unwrap();
+            }
+            _ => panic!("Expected piece"),
+        }
+    }
+
+    // TODO: verify hash
+
+    println!(
+        "Piece {} downloaded to {}",
+        piece_index,
+        output_file_name.display()
+    );
 }

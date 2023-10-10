@@ -402,6 +402,8 @@ fn main() {
 
             let piece = download_piece(&mut stream, *piece_index, piece_length);
 
+            // TODO: verify hash
+
             out_file.write(&piece).unwrap();
 
             println!(
@@ -490,9 +492,11 @@ fn main() {
 
                 let piece = download_piece(&mut stream, piece_index, piece_size);
 
+                // TODO: verify hash
+
                 let piece_offset = piece_index * torrent.info.piece_length;
 
-                out_file.seek(SeekFrom::Start(piece_size as u64)).unwrap();
+                out_file.seek(SeekFrom::Start(piece_offset as u64)).unwrap();
                 out_file.write(&piece).unwrap();
                 out_file.rewind().unwrap();
             }
@@ -554,8 +558,6 @@ fn download_piece(stream: &mut TcpStream, piece_index: usize, piece_size: usize)
             _ => panic!("Expected piece"),
         }
     }
-
-    // TODO: verify hash
 
     return piece;
 }

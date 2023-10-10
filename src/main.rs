@@ -448,7 +448,7 @@ fn download_piece(stream: &mut TcpStream, piece_index: usize, piece_length: usiz
         request.write_to_stream(&mut stream);
     }
 
-    let mut piece = Vec::with_capacity(piece_length);
+    let mut piece: Vec<u8> = Vec::with_capacity(piece_length);
 
     for i in 0..total_blocks {
         let block = PeerMessage::read_from_stream(&mut stream);
@@ -456,7 +456,7 @@ fn download_piece(stream: &mut TcpStream, piece_index: usize, piece_length: usiz
             PeerMessage::Piece { begin, block, .. } => {
                 println!("{} Received block at {}", i, begin);
 
-                piece[begin..begin+piece_length] = block;
+                piece[begin..begin+piece_length as u32] = block;
             }
             _ => panic!("Expected piece"),
         }

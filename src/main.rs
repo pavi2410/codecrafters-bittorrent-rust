@@ -428,7 +428,7 @@ fn urlencode_bytes(bytes: &[u8]) -> String {
         .collect::<String>()
 }
 
-fn download_piece(stream: &mut TcpStream, piece_index: usize, piece_length: usize) {
+fn download_piece(stream: &mut TcpStream, piece_index: usize, piece_length: usize) -> Vec<u8> {
     let total_blocks = (piece_length as f32 / BLOCK_SIZE as f32).ceil() as usize;
 
     println!("Piece length: {}", piece_length);

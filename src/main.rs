@@ -544,7 +544,7 @@ fn download_piece(stream: &mut TcpStream, piece_index: usize, piece_size: usize)
             PeerMessage::Piece { begin, block, .. } => {
                 println!("{} Received block at {}", i, begin);
 
-                // let begin = begin as usize;
+                let begin = begin as usize;
 
                 for i in 0..block.len() {
                     piece[begin + i] = block[i];

@@ -384,19 +384,28 @@ fn main() {
                 .open(output_file_name)
                 .unwrap();
 
+
+            let total_pieces = (torrent.info.length as f32 / torrent.info.piece_length as f32).ceil();
+
+            let piece_length = if piece_index == total_pieces - 1 {
+                torrent.info.length % torrent.info.piece_length
+            } else {
+                torrent.info.piece_length
+            };
+
             let total_blocks =
-                (torrent.info.piece_length as f32 / BLOCK_SIZE as f32).ceil() as usize;
+                (piece_length as f32 / BLOCK_SIZE as f32).ceil() as usize;
 
             println!("Expecting {} blocks", total_blocks);
 
-            println!("Piece length: {}", torrent.info.piece_length);
+            println!("Piece length: {}", piece_length);
 
             for i in 0..total_blocks {
                 let request = PeerMessage::Request {
                     index: *piece_index as u32,
                     begin: (i * BLOCK_SIZE) as u32,
                     length: if i == total_blocks - 1 {
-                        torrent.info.piece_length - i * BLOCK_SIZE
+                        piece_length % BLOCK_SIZE
                     } else {
                         BLOCK_SIZE
                     } as u32,

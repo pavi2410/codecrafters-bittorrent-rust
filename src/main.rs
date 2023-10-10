@@ -398,6 +398,12 @@ fn main() {
                     let piece = download_piece(&mut stream, piece_index, piece_length);
 
                     out_file.write(&piece).unwrap();
+
+                    println!(
+                        "Piece {} downloaded to {}",
+                        piece_index,
+                        output_file_name.display()
+                    );
                 }
 
                 None => {
@@ -411,6 +417,12 @@ fn main() {
 
                         let piece = download_piece(&mut stream, piece_index, piece_length);
                     }
+
+                    println!(
+                        "Downloaded {} to {}",
+                        file_name.display(),
+                        output_file_name.display()
+                    );
                 }
             }
         }
@@ -456,19 +468,15 @@ fn download_piece(stream: &mut TcpStream, piece_index: usize, piece_length: usiz
             PeerMessage::Piece { begin, block, .. } => {
                 println!("{} Received block at {}", i, begin);
 
-                piece[begin..begin+piece_length as u32] = block;
+                let begin = begin as usize;
+
+                piece[begin..begin+piece_length] = block;
             }
             _ => panic!("Expected piece"),
         }
     }
 
     // TODO: verify hash
-
-    println!(
-        "Piece {} downloaded to {}",
-        piece_index,
-        output_file_name.display()
-    );
 
     return piece;
 }

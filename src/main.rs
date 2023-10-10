@@ -238,7 +238,14 @@ enum Commands {
         #[arg(value_name = "FILE")]
         file_name: PathBuf,
 
-        piece_index: Option<usize>,
+        piece_index: usize,
+    },
+    Download {
+        #[arg(short = 'o', value_name = "FILE")]
+        output_file_name: PathBuf,
+
+        #[arg(value_name = "FILE")]
+        file_name: PathBuf,
     },
 }
 
@@ -387,44 +394,108 @@ fn main() {
 
             let total_pieces = (torrent.info.length as f32 / torrent.info.piece_length as f32).ceil() as usize;
 
-            match *piece_index {
-                Some(piece_index) => {
-                    let piece_length = if piece_index == total_pieces - 1 {
-                        torrent.info.length % torrent.info.piece_length
-                    } else {
-                        torrent.info.piece_length
-                    };
+            let piece_length = if *piece_index == total_pieces - 1 {
+                torrent.info.length % torrent.info.piece_length
+            } else {
+                torrent.info.piece_length
+            };
 
-                    let piece = download_piece(&mut stream, piece_index, piece_length);
+            let piece = download_piece(&mut stream, *piece_index, piece_length);
 
-                    out_file.write(&piece).unwrap();
+            out_file.write(&piece).unwrap();
 
-                    println!(
-                        "Piece {} downloaded to {}",
-                        piece_index,
-                        output_file_name.display()
-                    );
-                }
+            println!(
+                "Piece {} downloaded to {}",
+                piece_index,
+                output_file_name.display()
+            );
+        }
 
-                None => {
+        Some(Commands::DownloadPiece {
+            output_file_name,
+            file_name,
+        }) => {
 
-                    for piece_index in 0..total_pieces {
-                        let piece_length = if piece_index == total_pieces - 1 {
-                            torrent.info.length % torrent.info.piece_length
-                        } else {
-                            torrent.info.piece_length
-                        };
+            let torrent = Torrent::from_file(file_name).unwrap();
 
-                        let piece = download_piece(&mut stream, piece_index, piece_length);
-                    }
+            let info_hash = torrent.info.get_info_hash();
 
-                    println!(
-                        "Downloaded {} to {}",
-                        file_name.display(),
-                        output_file_name.display()
-                    );
-                }
+            let tracker_options = TrackerRequest {
+                info_hash: urlencode_bytes(&info_hash),
+                peer_id: MY_PEER_ID.to_string(),
+                port: 6881,
+                uploaded: 0,
+                downloaded: 0,
+                left: torrent.info.length,
+                compact: 1,
+            };
+
+            let tracker_url = tracker_options.build_tracker_url(torrent.announce);
+
+            println!("{}", tracker_url);
+
+            let resp = reqwest::blocking::get(tracker_url)
+                .unwrap()
+                .bytes()
+                .unwrap();
+
+            println!("{:?}", resp);
+
+            let tracker_response = de::from_bytes::<TrackerResponse>(&resp).unwrap();
+
+            let peer = tracker_response.get_peers()[0];
+
+            let mut stream = TcpStream::connect(peer).unwrap();
+
+            // handshake send
+            stream.write(&[19]).unwrap();
+            stream.write(b"BitTorrent protocol").unwrap();
+            stream.write(&[0; 8]).unwrap();
+            stream.write(&info_hash).unwrap();
+            stream.write(MY_PEER_ID.as_bytes()).unwrap();
+
+            // handshake receive
+            let mut buf = [0u8; 68];
+            stream.read_exact(&mut buf).unwrap();
+            println!("Peer ID: {}", hex::encode(&buf[48..]));
+
+            // bitfield receive
+            PeerMessage::read_from_stream(&mut stream);
+
+            // interested send
+            PeerMessage::Interested.write_to_stream(&mut stream);
+
+            // unchoke receive
+            PeerMessage::read_from_stream(&mut stream);
+
+            println!("Unchoked");
+
+            // request send and piece receive
+
+            let mut out_file = std::fs::OpenOptions::new()
+                .create(true)
+                .write(true)
+                .open(output_file_name)
+                .unwrap();
+
+
+            let total_pieces = (torrent.info.length as f32 / torrent.info.piece_length as f32).ceil() as usize;
+
+            for piece_index in 0..total_pieces {
+                let piece_length = if piece_index == total_pieces - 1 {
+                    torrent.info.length % torrent.info.piece_length
+                } else {
+                    torrent.info.piece_length
+                };
+
+                let piece = download_piece(&mut stream, piece_index, piece_length);
             }
+
+            println!(
+                "Downloaded {} to {}",
+                file_name.display(),
+                output_file_name.display()
+            );
         }
 
         None => {
